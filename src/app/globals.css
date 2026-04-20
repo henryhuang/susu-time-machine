@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #fff8fa;
+  --panel: #ffffff;
+  --line: #ede6e3;
+  --text: #2f2a2a;
+  --muted: #7a6f6f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+img {
+  max-width: 100%;
+}
+
+::selection {
+  background: #fde8ee;
+  color: #2f2a2a;
+}
+
+.story-content p {
+  margin: 0 0 1rem;
+}
+
+.story-content p:last-child {
+  margin-bottom: 0;
+}

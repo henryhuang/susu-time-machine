@@ -1,0 +1,71 @@
+name: 🚀 Deploy Only
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'APP 镜像标签（默认 latest）'
+        required: false
+        default: 'latest'
+        type: string
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+  APP_IMAGE_NAME: 'ghcr.io/${{ github.repository_owner }}/susu-time-machine'
+  REMOTE_APP_DIR: '/app/susu-time-machine'
+
+jobs:
+  deploy-only:
+    name: 🚀 Deploy Existing Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v5
+
+      - name: 📤 Upload docker-compose.yml
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: docker-compose.yml
+          target: ${{ env.REMOTE_APP_DIR }}
+          overwrite: true
+
+      - name: 🌐 Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -euo pipefail
+
+            mkdir -p "${{ env.REMOTE_APP_DIR }}/data"
+            mkdir -p "${{ env.REMOTE_APP_DIR }}/backup"
+
+            cat > "${{ env.REMOTE_APP_DIR }}/.env" <<'EOF'
+            ${{ secrets.APP_ENV_FILE }}
+            EOF
+
+            grep -q '^AUTH_SECRET=' "${{ env.REMOTE_APP_DIR }}/.env" || {
+              echo "ERROR: APP_ENV_FILE must include AUTH_SECRET"
+              exit 1
+            }
+
+            echo "${{ github.token }}" | docker login ghcr.io -u "${{ github.repository_owner }}" --password-stdin
+
+            cd "${{ env.REMOTE_APP_DIR }}"
+
+            if [ -f "${{ env.REMOTE_APP_DIR }}/data/app.db" ]; then
+              cp "${{ env.REMOTE_APP_DIR }}/data/app.db" "${{ env.REMOTE_APP_DIR }}/backup/app-$(date +%Y%m%d-%H%M%S).db"
+              find "${{ env.REMOTE_APP_DIR }}/backup" -name "app-*.db" -mtime +14 -delete || true
+            fi
+
+            export APP_IMAGE="${{ env.APP_IMAGE_NAME }}:${{ github.event.inputs.image_tag || 'latest' }}"
+            export DOCKER_DATABASE_URL="file:/app/data/app.db"
+            docker compose pull app
+            docker compose up -d --remove-orphans app

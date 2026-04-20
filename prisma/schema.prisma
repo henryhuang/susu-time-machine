@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Story {
+  id          String       @id @default(cuid())
+  title       String
+  summary     String
+  content     String
+  coverImage  String?
+  storyDate   DateTime
+  tags        String       @default("[]")
+  images      StoryImage[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([storyDate])
+  @@index([title])
+}
+
+model StoryImage {
+  id        String   @id @default(cuid())
+  storyId   String
+  imageUrl  String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  story     Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@index([storyId, sortOrder])
+}

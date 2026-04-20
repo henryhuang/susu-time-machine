@@ -1,0 +1,1658 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>酥酥时光机后台控制台 UI</title>
+    <style>
+      :root {
+        --peach-500: #f28ba8;
+        --peach-600: #e57494;
+        --peach-100: #fde8ee;
+        --peach-50: #fff5f7;
+        --blue: #7db7e8;
+        --blue-light: #eaf5ff;
+        --green: #7bcfa6;
+        --green-light: #eaf8f1;
+        --orange: #f3a85c;
+        --orange-light: #fff3e4;
+        --red: #e76f7a;
+        --red-light: #fdecef;
+        --white: #ffffff;
+        --bg: #fff8fa;
+        --panel: #ffffff;
+        --line: #ede6e3;
+        --divider: #f1edea;
+        --text: #2f2a2a;
+        --muted: #7a6f6f;
+        --subtle: #aaa0a0;
+        --soft-blue: #edf7fb;
+        --soft-green: #eff9f4;
+        --shadow-card: 0 8px 24px rgba(74, 52, 52, 0.06);
+        --shadow-soft: 0 4px 12px rgba(74, 52, 52, 0.05);
+        --shadow-popover: 0 12px 32px rgba(74, 52, 52, 0.1);
+        --radius: 8px;
+        --sidebar: 232px;
+        --topbar: 64px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: Inter, "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+        font-size: 14px;
+        line-height: 1.55;
+      }
+
+      button,
+      input,
+      textarea,
+      select {
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      img {
+        display: block;
+        max-width: 100%;
+      }
+
+      .shell {
+        display: grid;
+        min-height: 100vh;
+        grid-template-columns: var(--sidebar) minmax(0, 1fr);
+      }
+
+      .sidebar {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        padding: 22px 16px;
+        background: linear-gradient(180deg, #fff 0%, #fff5f7 100%);
+        border-right: 1px solid rgba(237, 230, 227, 0.9);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 8px 24px;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 38px;
+        height: 38px;
+        place-items: center;
+        border-radius: var(--radius);
+        background: var(--peach-500);
+        color: #fff;
+        font-weight: 700;
+        box-shadow: var(--shadow-soft);
+      }
+
+      .brand-title {
+        font-weight: 700;
+      }
+
+      .brand-subtitle {
+        margin-top: 1px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .nav {
+        display: grid;
+        gap: 8px;
+      }
+
+      .nav button {
+        display: flex;
+        width: 100%;
+        align-items: center;
+        gap: 10px;
+        border: 0;
+        border-radius: var(--radius);
+        padding: 11px 12px;
+        background: transparent;
+        color: var(--muted);
+        text-align: left;
+      }
+
+      .nav button.active,
+      .nav button:hover {
+        background: var(--peach-100);
+        color: var(--text);
+      }
+
+      .nav-icon {
+        display: grid;
+        width: 24px;
+        height: 24px;
+        place-items: center;
+        border-radius: 7px;
+        background: rgba(255, 255, 255, 0.72);
+        color: var(--peach-600);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .sidebar-note {
+        position: absolute;
+        right: 16px;
+        bottom: 18px;
+        left: 16px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: rgba(255, 255, 255, 0.78);
+        padding: 14px;
+        box-shadow: var(--shadow-soft);
+      }
+
+      .admin {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .avatar {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        flex: 0 0 auto;
+        place-items: center;
+        border-radius: 50%;
+        background: var(--blue-light);
+        color: #3f86ba;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .main {
+        min-width: 0;
+      }
+
+      .topbar {
+        position: sticky;
+        z-index: 4;
+        top: 0;
+        display: flex;
+        height: var(--topbar);
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 32px;
+        background: rgba(255, 248, 250, 0.88);
+        border-bottom: 1px solid rgba(237, 230, 227, 0.72);
+        backdrop-filter: blur(12px);
+      }
+
+      .crumb {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .crumb strong {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .content {
+        padding: 32px;
+      }
+
+      .page {
+        display: none;
+        animation: fade 0.18s ease;
+      }
+
+      .page.active {
+        display: block;
+      }
+
+      @keyframes fade {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .page-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 24px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: 24px;
+        line-height: 32px;
+        font-weight: 700;
+      }
+
+      h2 {
+        font-size: 18px;
+        line-height: 26px;
+        font-weight: 700;
+      }
+
+      h3 {
+        font-size: 16px;
+        line-height: 24px;
+        font-weight: 700;
+      }
+
+      .desc {
+        margin-top: 5px;
+        color: var(--muted);
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .tiny {
+        color: var(--subtle);
+        font-size: 12px;
+      }
+
+      .btn {
+        display: inline-flex;
+        min-height: 36px;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border: 1px solid transparent;
+        border-radius: var(--radius);
+        padding: 0 14px;
+        background: #fff;
+        color: var(--text);
+        font-weight: 600;
+        transition:
+          transform 0.16s ease,
+          box-shadow 0.16s ease,
+          background 0.16s ease;
+      }
+
+      .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-soft);
+      }
+
+      .btn.primary {
+        min-height: 40px;
+        background: var(--peach-500);
+        color: #fff;
+      }
+
+      .btn.primary:hover {
+        background: var(--peach-600);
+      }
+
+      .btn.secondary {
+        border-color: var(--line);
+        background: #fff;
+      }
+
+      .btn.danger {
+        background: var(--red);
+        color: #fff;
+      }
+
+      .btn.text {
+        border: 0;
+        background: transparent;
+        color: var(--peach-600);
+        box-shadow: none;
+      }
+
+      .btn.small {
+        min-height: 32px;
+        padding: 0 10px;
+        font-size: 12px;
+      }
+
+      .grid {
+        display: grid;
+        gap: 24px;
+      }
+
+      .grid.two {
+        grid-template-columns: minmax(0, 1fr) 320px;
+        align-items: start;
+      }
+
+      .grid.stats {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .card {
+        border: 1px solid rgba(237, 230, 227, 0.88);
+        border-radius: var(--radius);
+        background: var(--panel);
+        box-shadow: var(--shadow-card);
+      }
+
+      .card-pad {
+        padding: 24px;
+      }
+
+      .welcome {
+        position: relative;
+        overflow: hidden;
+        min-height: 164px;
+        background:
+          linear-gradient(135deg, rgba(253, 232, 238, 0.92), rgba(234, 245, 255, 0.92)),
+          #fff;
+      }
+
+      .welcome-content {
+        position: relative;
+        z-index: 2;
+        max-width: 620px;
+      }
+
+      .welcome-photo {
+        position: absolute;
+        right: 30px;
+        bottom: 18px;
+        width: 176px;
+        height: 112px;
+        overflow: hidden;
+        border: 6px solid rgba(255, 255, 255, 0.78);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-popover);
+        transform: rotate(2deg);
+      }
+
+      .welcome-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .soft-shape {
+        position: absolute;
+        right: 160px;
+        top: 24px;
+        width: 54px;
+        height: 34px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.62);
+      }
+
+      .soft-shape::before,
+      .soft-shape::after {
+        position: absolute;
+        content: "";
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.72);
+      }
+
+      .soft-shape::before {
+        left: 8px;
+        top: -12px;
+        width: 28px;
+        height: 28px;
+      }
+
+      .soft-shape::after {
+        right: 7px;
+        top: -8px;
+        width: 22px;
+        height: 22px;
+      }
+
+      .stat {
+        display: grid;
+        gap: 12px;
+        padding: 20px;
+      }
+
+      .stat-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: var(--muted);
+      }
+
+      .stat-num {
+        font-size: 28px;
+        line-height: 36px;
+        font-weight: 800;
+      }
+
+      .stat-mark {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border-radius: var(--radius);
+        background: var(--peach-100);
+        color: var(--peach-600);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .quick {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .quick-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 16px;
+        background: #fff;
+      }
+
+      .quick-card:nth-child(2) .stat-mark {
+        background: var(--blue-light);
+        color: #3f86ba;
+      }
+
+      .quick-card:nth-child(3) .stat-mark {
+        background: var(--green-light);
+        color: #4c9f75;
+      }
+
+      .section-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      .story-stack {
+        display: grid;
+        gap: 12px;
+      }
+
+      .story-row {
+        display: grid;
+        grid-template-columns: 88px minmax(220px, 1fr) 132px 120px 120px 188px;
+        align-items: center;
+        gap: 16px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 14px;
+        background: #fff;
+      }
+
+      .story-row:hover {
+        background: #fffafb;
+      }
+
+      .cover {
+        width: 88px;
+        height: 64px;
+        overflow: hidden;
+        border-radius: var(--radius);
+        background: var(--peach-100);
+      }
+
+      .cover img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .tag {
+        display: inline-flex;
+        min-height: 24px;
+        align-items: center;
+        border-radius: var(--radius);
+        padding: 2px 8px;
+        background: var(--peach-100);
+        color: var(--peach-600);
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .tag.blue {
+        background: var(--blue-light);
+        color: #3f86ba;
+      }
+
+      .tag.green {
+        background: var(--green-light);
+        color: #4c9f75;
+      }
+
+      .tag.gray {
+        background: #f6f3f2;
+        color: var(--muted);
+      }
+
+      .actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 6px;
+        white-space: nowrap;
+      }
+
+      .actions .btn {
+        flex: 0 0 auto;
+      }
+
+      .filters {
+        display: grid;
+        grid-template-columns: minmax(280px, 1fr) 180px 160px auto;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      .field {
+        display: grid;
+        gap: 8px;
+      }
+
+      label {
+        font-weight: 650;
+      }
+
+      input,
+      textarea,
+      select {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: #fff;
+        color: var(--text);
+        outline: none;
+      }
+
+      input,
+      select {
+        height: 40px;
+        padding: 0 12px;
+      }
+
+      textarea {
+        min-height: 120px;
+        resize: vertical;
+        padding: 11px 12px;
+      }
+
+      .editor {
+        min-height: 240px;
+      }
+
+      input:focus,
+      textarea:focus,
+      select:focus {
+        border-color: var(--peach-500);
+        box-shadow: 0 0 0 3px rgba(242, 139, 168, 0.14);
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .form-grid .full {
+        grid-column: 1 / -1;
+      }
+
+      .sticky-card {
+        position: sticky;
+        top: 88px;
+        display: grid;
+        align-self: start;
+        align-content: start;
+        align-items: start;
+        justify-items: start;
+        gap: 14px;
+      }
+
+      .sticky-card .summary-line {
+        width: 100%;
+      }
+
+      .sticky-card .btn {
+        width: auto;
+      }
+
+      .summary-line {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        border-bottom: 1px solid var(--divider);
+        padding-bottom: 10px;
+      }
+
+      .dropzone {
+        display: grid;
+        min-height: 132px;
+        place-items: center;
+        border: 1px dashed rgba(242, 139, 168, 0.72);
+        border-radius: var(--radius);
+        background: var(--peach-50);
+        text-align: center;
+      }
+
+      .upload-icon {
+        display: grid;
+        width: 42px;
+        height: 42px;
+        place-items: center;
+        margin: 0 auto 10px;
+        border-radius: var(--radius);
+        background: #fff;
+        color: var(--peach-600);
+        font-weight: 800;
+        box-shadow: var(--shadow-soft);
+      }
+
+      .image-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .image-card {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: #fff;
+      }
+
+      .image-card.cover-active {
+        border-color: var(--peach-500);
+        box-shadow: 0 0 0 3px rgba(242, 139, 168, 0.12);
+      }
+
+      .image-thumb {
+        height: 128px;
+        background: var(--peach-100);
+      }
+
+      .image-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .image-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px;
+      }
+
+      .badge-num,
+      .cover-badge {
+        position: absolute;
+        top: 8px;
+        display: inline-flex;
+        height: 24px;
+        align-items: center;
+        border-radius: var(--radius);
+        padding: 0 8px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .badge-num {
+        left: 8px;
+        background: rgba(255, 255, 255, 0.9);
+      }
+
+      .cover-badge {
+        right: 8px;
+        background: var(--peach-500);
+        color: #fff;
+      }
+
+      .progress-card .image-thumb {
+        display: grid;
+        place-items: center;
+        padding: 18px;
+      }
+
+      .progress {
+        width: 100%;
+        height: 8px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #fff;
+      }
+
+      .progress span {
+        display: block;
+        width: 68%;
+        height: 100%;
+        border-radius: 999px;
+        background: var(--peach-500);
+      }
+
+      .empty-state {
+        display: grid;
+        min-height: 280px;
+        place-items: center;
+        border: 1px dashed var(--line);
+        border-radius: var(--radius);
+        background: rgba(255, 255, 255, 0.72);
+        text-align: center;
+      }
+
+      .empty-art {
+        position: relative;
+        width: 92px;
+        height: 72px;
+        margin: 0 auto 14px;
+      }
+
+      .empty-art::before {
+        position: absolute;
+        inset: 12px 6px 8px;
+        content: "";
+        border: 2px solid var(--peach-500);
+        border-radius: var(--radius);
+        background: var(--peach-50);
+      }
+
+      .empty-art::after {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        width: 38px;
+        height: 28px;
+        content: "";
+        border: 2px solid var(--blue);
+        border-radius: var(--radius);
+        background: var(--blue-light);
+      }
+
+      .pagination {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 16px;
+      }
+
+      .page-num {
+        display: grid;
+        width: 32px;
+        height: 32px;
+        place-items: center;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: #fff;
+        color: var(--muted);
+      }
+
+      .page-num.active {
+        border-color: var(--peach-500);
+        background: var(--peach-500);
+        color: #fff;
+      }
+
+      .login-canvas {
+        display: grid;
+        min-height: calc(100vh - 64px);
+        place-items: center;
+        padding: 32px;
+      }
+
+      .login-frame {
+        display: grid;
+        width: min(1060px, 100%);
+        min-height: 620px;
+        grid-template-columns: 1fr 420px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: #fff;
+        box-shadow: var(--shadow-popover);
+      }
+
+      .login-brand {
+        position: relative;
+        overflow: hidden;
+        padding: 52px;
+        background:
+          linear-gradient(135deg, rgba(253, 232, 238, 0.94), rgba(234, 245, 255, 0.9)),
+          #fff;
+      }
+
+      .login-brand-photo {
+        position: absolute;
+        right: 52px;
+        bottom: 52px;
+        width: 360px;
+        height: 240px;
+        overflow: hidden;
+        border: 8px solid rgba(255, 255, 255, 0.8);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-popover);
+      }
+
+      .login-brand-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .login-card {
+        display: grid;
+        align-content: center;
+        gap: 18px;
+        padding: 52px;
+      }
+
+      .check-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .check-row input {
+        width: 16px;
+        height: 16px;
+        margin: 0 6px 0 0;
+      }
+
+      .toast-stack {
+        display: grid;
+        gap: 10px;
+      }
+
+      .toast {
+        display: flex;
+        width: 360px;
+        align-items: flex-start;
+        gap: 10px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 12px;
+        background: #fff;
+        box-shadow: var(--shadow-popover);
+      }
+
+      .toast-dot {
+        width: 10px;
+        height: 10px;
+        margin-top: 6px;
+        border-radius: 50%;
+        background: var(--green);
+      }
+
+      .toast.error .toast-dot {
+        background: var(--red);
+      }
+
+      .toast.warning .toast-dot {
+        background: var(--orange);
+      }
+
+      .toast.info .toast-dot {
+        background: var(--blue);
+      }
+
+      .modal-demo {
+        display: grid;
+        min-height: 420px;
+        place-items: center;
+        border-radius: var(--radius);
+        background: rgba(47, 42, 42, 0.24);
+      }
+
+      .modal {
+        width: 420px;
+        border-radius: var(--radius);
+        background: #fff;
+        padding: 24px;
+        box-shadow: var(--shadow-popover);
+      }
+
+      .modal-icon {
+        display: grid;
+        width: 44px;
+        height: 44px;
+        place-items: center;
+        border-radius: var(--radius);
+        background: var(--red-light);
+        color: var(--red);
+        font-weight: 900;
+      }
+
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 24px;
+      }
+
+      .system-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .swatch {
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: #fff;
+      }
+
+      .swatch-color {
+        height: 64px;
+      }
+
+      .swatch div:last-child {
+        padding: 10px;
+      }
+
+      .component-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+      }
+
+      @media (max-width: 1280px) {
+        :root {
+          --sidebar: 208px;
+        }
+
+        .content {
+          padding: 24px;
+        }
+
+        .grid.two {
+          grid-template-columns: 1fr;
+        }
+
+        .sticky-card {
+          position: static;
+        }
+
+        .story-row {
+          grid-template-columns: 88px minmax(240px, 1fr) 120px 188px;
+        }
+
+        .story-row .hide-mid {
+          display: none;
+        }
+
+        .image-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">酥</div>
+          <div>
+            <div class="brand-title">酥酥时光机后台</div>
+            <div class="brand-subtitle">成长故事工作台</div>
+          </div>
+        </div>
+
+        <nav class="nav" aria-label="后台页面">
+          <button class="active" data-page="dashboard"><span class="nav-icon">D</span>仪表盘</button>
+          <button data-page="stories"><span class="nav-icon">S</span>故事管理</button>
+          <button data-page="create"><span class="nav-icon">N</span>新增故事</button>
+          <button data-page="edit"><span class="nav-icon">E</span>编辑故事</button>
+          <button data-page="upload"><span class="nav-icon">U</span>图片组件</button>
+          <button data-page="login"><span class="nav-icon">L</span>登录页</button>
+          <button data-page="states"><span class="nav-icon">T</span>状态组件</button>
+        </nav>
+
+        <div class="sidebar-note">
+          <div class="admin">
+            <div class="avatar">爸</div>
+            <div>
+              <div style="font-weight: 700">管理员</div>
+              <div class="tiny">记录今天的小瞬间</div>
+            </div>
+          </div>
+          <button class="btn text small" style="margin-top: 10px; padding-left: 0">退出登录</button>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <div class="crumb">酥酥时光机 / <strong id="crumb-title">仪表盘</strong></div>
+          </div>
+          <div class="top-actions">
+            <button class="btn secondary small">预览小程序</button>
+            <div class="admin">
+              <div class="avatar">酥</div>
+              <div>
+                <div style="font-weight: 700">酥酥爸爸</div>
+                <div class="tiny">admin</div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div class="content">
+          <section class="page active" id="dashboard">
+            <div class="page-head">
+              <div>
+                <h1>仪表盘</h1>
+                <p class="desc">轻量查看内容概览，快速继续维护酥酥的成长故事。</p>
+              </div>
+              <button class="btn primary" data-page-jump="create">新增故事</button>
+            </div>
+
+            <div class="grid">
+              <div class="card card-pad welcome">
+                <div class="soft-shape"></div>
+                <div class="welcome-content">
+                  <h1>欢迎回来</h1>
+                  <p class="desc" style="max-width: 440px">今天也来记录酥酥的成长吧。把照片、日期和一句小故事整理好，时间轴会慢慢变成一本温柔的小书。</p>
+                  <div style="display: flex; gap: 10px; margin-top: 22px">
+                    <button class="btn primary" data-page-jump="create">写一条新故事</button>
+                    <button class="btn secondary" data-page-jump="stories">进入故事管理</button>
+                  </div>
+                </div>
+                <div class="welcome-photo">
+                  <img alt="亲子成长照片" src="https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&w=640&q=80" />
+                </div>
+              </div>
+
+              <div class="grid stats">
+                <div class="card stat">
+                  <div class="stat-top"><span>故事总数</span><span class="stat-mark">ST</span></div>
+                  <div class="stat-num">128</div>
+                  <div class="tiny">较上月新增 12 条</div>
+                </div>
+                <div class="card stat">
+                  <div class="stat-top"><span>图片总数</span><span class="stat-mark" style="background: var(--blue-light); color: #3f86ba">PH</span></div>
+                  <div class="stat-num">1,426</div>
+                  <div class="tiny">最近上传 36 张</div>
+                </div>
+                <div class="card stat">
+                  <div class="stat-top"><span>最近更新</span><span class="stat-mark" style="background: var(--green-light); color: #4c9f75">UP</span></div>
+                  <div class="stat-num">8</div>
+                  <div class="tiny">7 天内维护</div>
+                </div>
+                <div class="card stat">
+                  <div class="stat-top"><span>本月新增</span><span class="stat-mark" style="background: var(--orange-light); color: #b87128">MO</span></div>
+                  <div class="stat-num">15</div>
+                  <div class="tiny">继续保持小记录</div>
+                </div>
+              </div>
+
+              <div class="card card-pad">
+                <div class="section-title">
+                  <h2>快捷入口</h2>
+                  <span class="tiny">常用维护动作</span>
+                </div>
+                <div class="quick">
+                  <div class="quick-card">
+                    <div>
+                      <h3>新增故事</h3>
+                      <p class="tiny">写下今天的新瞬间</p>
+                    </div>
+                    <span class="stat-mark">+</span>
+                  </div>
+                  <div class="quick-card">
+                    <div>
+                      <h3>故事管理</h3>
+                      <p class="tiny">搜索、编辑、删除</p>
+                    </div>
+                    <span class="stat-mark">S</span>
+                  </div>
+                  <div class="quick-card">
+                    <div>
+                      <h3>上传图片</h3>
+                      <p class="tiny">整理照片和封面</p>
+                    </div>
+                    <span class="stat-mark">U</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card card-pad">
+                <div class="section-title">
+                  <h2>最近更新</h2>
+                  <button class="btn text small" data-page-jump="stories">查看全部</button>
+                </div>
+                <div class="story-stack">
+                  <article class="story-row">
+                    <div class="cover"><img alt="故事封面" src="https://images.unsplash.com/photo-1546015720-b8b30df5aa27?auto=format&fit=crop&w=360&q=80" /></div>
+                    <div>
+                      <h3>第一次自己堆好积木城堡</h3>
+                      <p class="tiny">认真到不肯抬头，最后还给城堡安排了一扇小门。</p>
+                    </div>
+                    <div class="hide-mid"><span class="tag">第一次</span></div>
+                    <div class="hide-mid tiny">2026-04-18</div>
+                    <div class="tiny">今天 10:12</div>
+                    <div class="actions"><button class="btn secondary small">编辑</button></div>
+                  </article>
+                  <article class="story-row">
+                    <div class="cover"><img alt="故事封面" src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=360&q=80" /></div>
+                    <div>
+                      <h3>春天的公园野餐</h3>
+                      <p class="tiny">带着小毯子和草莓，酥酥说云朵像棉花糖。</p>
+                    </div>
+                    <div class="hide-mid"><span class="tag blue">日常</span></div>
+                    <div class="hide-mid tiny">2026-04-12</div>
+                    <div class="tiny">昨天 21:08</div>
+                    <div class="actions"><button class="btn secondary small">编辑</button></div>
+                  </article>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="page" id="stories">
+            <div class="page-head">
+              <div>
+                <h1>故事管理</h1>
+                <p class="desc">管理酥酥的成长故事和照片，支持搜索、筛选、编辑与删除。</p>
+              </div>
+              <button class="btn primary" data-page-jump="create">新增故事</button>
+            </div>
+
+            <div class="card card-pad">
+              <div class="filters">
+                <input aria-label="按标题搜索" placeholder="按标题搜索" />
+                <select aria-label="标签筛选">
+                  <option>全部标签</option>
+                  <option>日常</option>
+                  <option>生日</option>
+                  <option>第一次</option>
+                </select>
+                <select aria-label="日期排序">
+                  <option>最新优先</option>
+                  <option>最早优先</option>
+                </select>
+                <button class="btn secondary">重置筛选</button>
+              </div>
+
+              <div class="story-stack">
+                <article class="story-row">
+                  <div class="cover"><img alt="封面" src="https://images.unsplash.com/photo-1546015720-b8b30df5aa27?auto=format&fit=crop&w=360&q=80" /></div>
+                  <div>
+                    <h3>第一次自己堆好积木城堡</h3>
+                    <p class="tiny">认真到不肯抬头，最后还给城堡安排了一扇小门。</p>
+                  </div>
+                  <div class="tags hide-mid"><span class="tag">第一次</span><span class="tag blue">日常</span></div>
+                  <div class="tiny hide-mid">2026-04-18</div>
+                  <div class="tiny">更新 10:12</div>
+                  <div class="actions">
+                    <button class="btn text small">查看</button>
+                    <button class="btn secondary small" data-page-jump="edit">编辑</button>
+                    <button class="btn text small" style="color: var(--red)">删除</button>
+                  </div>
+                </article>
+                <article class="story-row">
+                  <div class="cover"><img alt="封面" src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=360&q=80" /></div>
+                  <div>
+                    <h3>春天的公园野餐</h3>
+                    <p class="tiny">带着小毯子和草莓，酥酥说云朵像棉花糖。</p>
+                  </div>
+                  <div class="tags hide-mid"><span class="tag blue">日常</span><span class="tag green">旅行</span></div>
+                  <div class="tiny hide-mid">2026-04-12</div>
+                  <div class="tiny">更新 昨天</div>
+                  <div class="actions">
+                    <button class="btn text small">查看</button>
+                    <button class="btn secondary small" data-page-jump="edit">编辑</button>
+                    <button class="btn text small" style="color: var(--red)">删除</button>
+                  </div>
+                </article>
+                <article class="story-row">
+                  <div class="cover"><img alt="封面" src="https://images.unsplash.com/photo-1516627145497-ae6968895b74?auto=format&fit=crop&w=360&q=80" /></div>
+                  <div>
+                    <h3>两岁生日的小蛋糕</h3>
+                    <p class="tiny">吹蜡烛之前先认真观察草莓，许愿的时候偷偷笑了。</p>
+                  </div>
+                  <div class="tags hide-mid"><span class="tag">生日</span><span class="tag gray">成长</span></div>
+                  <div class="tiny hide-mid">2026-03-28</div>
+                  <div class="tiny">更新 04-01</div>
+                  <div class="actions">
+                    <button class="btn text small">查看</button>
+                    <button class="btn secondary small" data-page-jump="edit">编辑</button>
+                    <button class="btn text small" style="color: var(--red)">删除</button>
+                  </div>
+                </article>
+              </div>
+
+              <div class="pagination">
+                <button class="btn secondary small">上一页</button>
+                <span class="page-num active">1</span>
+                <span class="page-num">2</span>
+                <span class="page-num">3</span>
+                <button class="btn secondary small">下一页</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="page" id="create">
+            <div class="page-head">
+              <div>
+                <h1>新增故事</h1>
+                <p class="desc">把标题、日期、正文和照片整理成一条新的成长记录。</p>
+              </div>
+              <button class="btn secondary" data-page-jump="stories">取消</button>
+            </div>
+
+            <div class="grid two">
+              <div class="grid">
+                <div class="card card-pad">
+                  <div class="section-title">
+                    <h2>基础信息</h2>
+                    <span class="tiny">标题、日期和标签会展示在时间轴里</span>
+                  </div>
+                  <div class="form-grid">
+                    <div class="field full">
+                      <label>标题 <span style="color: var(--red)">*</span></label>
+                      <input placeholder="例如：第一次自己堆好积木城堡" />
+                    </div>
+                    <div class="field full">
+                      <label>简短描述</label>
+                      <textarea placeholder="写一两句话概括这条故事，会显示在列表和时间轴卡片中。"></textarea>
+                    </div>
+                    <div class="field">
+                      <label>故事日期</label>
+                      <input type="date" value="2026-04-20" />
+                    </div>
+                    <div class="field">
+                      <label>标签</label>
+                      <select>
+                        <option>日常、第一次</option>
+                        <option>生日</option>
+                        <option>旅行</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card card-pad">
+                  <div class="section-title">
+                    <h2>内容信息</h2>
+                    <span class="tiny">保持简单，像写家庭日记一样</span>
+                  </div>
+                  <div class="field">
+                    <label>正文内容</label>
+                    <textarea class="editor" placeholder="记录今天发生了什么，酥酥说了什么，或者这一刻为什么值得留下。"></textarea>
+                  </div>
+                </div>
+
+                <div class="card card-pad">
+                  <div class="section-title">
+                    <div>
+                      <h2>图片管理</h2>
+                      <p class="tiny">拖拽图片可以调整故事里的展示顺序</p>
+                    </div>
+                    <button class="btn secondary small">批量上传</button>
+                  </div>
+                  <div class="dropzone">
+                    <div>
+                      <div class="upload-icon">↑</div>
+                      <h3>点击上传图片</h3>
+                      <p class="tiny">支持 JPG、PNG，建议上传清晰照片</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <aside class="card card-pad sticky-card">
+                <h2>发布前检查</h2>
+                <div class="summary-line"><span class="muted">标题</span><strong>未填写</strong></div>
+                <div class="summary-line"><span class="muted">故事日期</span><strong>2026-04-20</strong></div>
+                <div class="summary-line"><span class="muted">图片数量</span><strong>0 张</strong></div>
+                <div class="summary-line"><span class="muted">封面图</span><strong style="color: var(--orange)">未设置</strong></div>
+                <button class="btn primary">保存故事</button>
+                <button class="btn secondary">保存草稿</button>
+              </aside>
+            </div>
+          </section>
+
+          <section class="page" id="edit">
+            <div class="page-head">
+              <div>
+                <h1>编辑故事</h1>
+                <p class="desc">故事管理 / 编辑故事。已上传图片可重新排序、设为封面或删除。</p>
+              </div>
+              <button class="btn secondary" data-page-jump="stories">返回</button>
+            </div>
+
+            <div class="grid two">
+              <div class="grid">
+                <div class="card card-pad">
+                  <div class="section-title">
+                    <h2>基础信息</h2>
+                    <span class="tag green">已保存</span>
+                  </div>
+                  <div class="form-grid">
+                    <div class="field full">
+                      <label>标题 <span style="color: var(--red)">*</span></label>
+                      <input value="第一次自己堆好积木城堡" />
+                    </div>
+                    <div class="field full">
+                      <label>简短描述</label>
+                      <textarea>认真到不肯抬头，最后还给城堡安排了一扇小门。</textarea>
+                    </div>
+                    <div class="field">
+                      <label>故事日期</label>
+                      <input type="date" value="2026-04-18" />
+                    </div>
+                    <div class="field">
+                      <label>标签</label>
+                      <select>
+                        <option>第一次、日常</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card card-pad">
+                  <div class="section-title">
+                    <h2>内容信息</h2>
+                    <span class="tiny">上次更新：今天 10:12</span>
+                  </div>
+                  <textarea class="editor">今天酥酥在客厅地垫上搭了很久的积木。她先把粉色和蓝色的积木分开，又把最高的一块放在中间，说这是城堡的塔。最后她给小熊留了一扇门，还认真邀请我们进去参观。</textarea>
+                </div>
+
+                <div class="card card-pad">
+                  <div class="section-title">
+                    <div>
+                      <h2>图片管理</h2>
+                      <p class="tiny">当前第 1 张为封面，拖拽卡片可调整展示顺序</p>
+                    </div>
+                    <button class="btn secondary small">继续上传</button>
+                  </div>
+                  <div class="image-grid">
+                    <div class="image-card cover-active">
+                      <span class="badge-num">1</span><span class="cover-badge">封面</span>
+                      <div class="image-thumb"><img alt="积木照片" src="https://images.unsplash.com/photo-1546015720-b8b30df5aa27?auto=format&fit=crop&w=500&q=80" /></div>
+                      <div class="image-meta"><span class="tiny">拖拽排序</span><button class="btn text small">预览</button></div>
+                    </div>
+                    <div class="image-card">
+                      <span class="badge-num">2</span>
+                      <div class="image-thumb"><img alt="积木照片" src="https://images.unsplash.com/photo-1515488764276-beab7607c1e6?auto=format&fit=crop&w=500&q=80" /></div>
+                      <div class="image-meta"><button class="btn text small">设为封面</button><button class="btn text small" style="color: var(--red)">删除</button></div>
+                    </div>
+                    <div class="image-card">
+                      <span class="badge-num">3</span>
+                      <div class="image-thumb"><img alt="玩具照片" src="https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?auto=format&fit=crop&w=500&q=80" /></div>
+                      <div class="image-meta"><button class="btn text small">设为封面</button><button class="btn text small" style="color: var(--red)">删除</button></div>
+                    </div>
+                    <div class="image-card progress-card">
+                      <span class="badge-num">4</span>
+                      <div class="image-thumb">
+                        <div style="width: 100%">
+                          <div class="progress"><span></span></div>
+                          <p class="tiny" style="margin-top: 10px; text-align: center">上传中 68%</p>
+                        </div>
+                      </div>
+                      <div class="image-meta"><span class="tiny">请稍候</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <aside class="card card-pad sticky-card">
+                <h2>编辑操作</h2>
+                <div class="summary-line"><span class="muted">状态</span><strong style="color: var(--green)">已发布</strong></div>
+                <div class="summary-line"><span class="muted">图片数量</span><strong>4 张</strong></div>
+                <div class="summary-line"><span class="muted">封面图</span><strong>第 1 张</strong></div>
+                <button class="btn primary">保存修改</button>
+                <button class="btn secondary">预览故事</button>
+                <button class="btn text" style="color: var(--red)">删除这条故事</button>
+              </aside>
+            </div>
+          </section>
+
+          <section class="page" id="upload">
+            <div class="page-head">
+              <div>
+                <h1>图片上传与管理组件</h1>
+                <p class="desc">用于新增和编辑故事，可复用上传、预览、设为封面、删除、排序状态。</p>
+              </div>
+            </div>
+
+            <div class="grid">
+              <div class="card card-pad">
+                <div class="section-title">
+                  <h2>上传入口</h2>
+                  <span class="tiny">Components / Upload / Dropzone</span>
+                </div>
+                <div class="dropzone">
+                  <div>
+                    <div class="upload-icon">↑</div>
+                    <h3>点击上传图片</h3>
+                    <p class="tiny">支持 JPG、PNG，建议上传清晰照片</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card card-pad">
+                <div class="section-title">
+                  <h2>图片网格状态</h2>
+                  <span class="tiny">成功、封面、上传中、失败</span>
+                </div>
+                <div class="image-grid">
+                  <div class="image-card cover-active">
+                    <span class="badge-num">1</span><span class="cover-badge">封面</span>
+                    <div class="image-thumb"><img alt="照片状态" src="https://images.unsplash.com/photo-1516627145497-ae6968895b74?auto=format&fit=crop&w=500&q=80" /></div>
+                    <div class="image-meta"><span class="tiny">已设为封面</span><button class="btn text small">预览</button></div>
+                  </div>
+                  <div class="image-card">
+                    <span class="badge-num">2</span>
+                    <div class="image-thumb"><img alt="照片状态" src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=500&q=80" /></div>
+                    <div class="image-meta"><button class="btn text small">设为封面</button><button class="btn text small" style="color: var(--red)">删除</button></div>
+                  </div>
+                  <div class="image-card progress-card">
+                    <span class="badge-num">3</span>
+                    <div class="image-thumb">
+                      <div style="width: 100%">
+                        <div class="progress"><span></span></div>
+                        <p class="tiny" style="margin-top: 10px; text-align: center">上传中 68%</p>
+                      </div>
+                    </div>
+                    <div class="image-meta"><span class="tiny">正在上传</span></div>
+                  </div>
+                  <div class="image-card">
+                    <span class="badge-num">4</span>
+                    <div class="image-thumb" style="display: grid; place-items: center; background: var(--red-light); color: var(--red); font-weight: 700">上传失败</div>
+                    <div class="image-meta"><button class="btn text small">重试</button><button class="btn text small" style="color: var(--red)">删除</button></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="page" id="login">
+            <div class="login-canvas">
+              <div class="login-frame">
+                <div class="login-brand">
+                  <div class="brand" style="padding: 0">
+                    <div class="brand-mark">酥</div>
+                    <div>
+                      <div class="brand-title">酥酥时光机后台</div>
+                      <div class="brand-subtitle">成长故事管理端</div>
+                    </div>
+                  </div>
+                  <div style="max-width: 380px; margin-top: 62px">
+                    <h1>欢迎回来</h1>
+                    <p class="desc">今天也来记录酥酥的成长吧。那些小小的表情、第一次和普通日常，都值得被好好保存。</p>
+                  </div>
+                  <div class="soft-shape" style="right: 72px; top: 92px"></div>
+                  <div class="login-brand-photo">
+                    <img alt="登录页成长照片" src="https://images.unsplash.com/photo-1515488764276-beab7607c1e6?auto=format&fit=crop&w=900&q=80" />
+                  </div>
+                </div>
+                <div class="login-card">
+                  <div>
+                    <h1>登录后台</h1>
+                    <p class="desc">管理酥酥的成长故事</p>
+                  </div>
+                  <div class="field">
+                    <label>用户名</label>
+                    <input value="admin" />
+                  </div>
+                  <div class="field">
+                    <label>密码</label>
+                    <input type="password" value="password" />
+                  </div>
+                  <div class="check-row">
+                    <label style="display: flex; align-items: center; font-weight: 400"><input type="checkbox" checked />记住登录状态</label>
+                    <button class="btn text small">忘记密码</button>
+                  </div>
+                  <button class="btn primary">登录</button>
+                  <p class="tiny">登录失败时在这里显示温和明确的错误提示。</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="page" id="states">
+            <div class="page-head">
+              <div>
+                <h1>状态与弹窗</h1>
+                <p class="desc">空状态、消息提示、删除确认弹窗和基础设计系统样式。</p>
+              </div>
+            </div>
+
+            <div class="grid">
+              <div class="card card-pad">
+                <div class="section-title">
+                  <h2>空状态</h2>
+                  <button class="btn primary small">新增故事</button>
+                </div>
+                <div class="empty-state">
+                  <div>
+                    <div class="empty-art"></div>
+                    <h3>还没有故事</h3>
+                    <p class="desc">先记录一个今天的成长瞬间吧</p>
+                    <button class="btn primary" style="margin-top: 16px">新增故事</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="grid two">
+                <div class="card card-pad">
+                  <div class="section-title"><h2>删除确认弹窗</h2></div>
+                  <div class="modal-demo">
+                    <div class="modal">
+                      <div class="modal-icon">!</div>
+                      <h2 style="margin-top: 16px">确认删除？</h2>
+                      <p class="desc">删除后将移除这条故事数据，但不会自动删除 COS 中的图片文件。</p>
+                      <div class="modal-actions">
+                        <button class="btn secondary">取消</button>
+                        <button class="btn danger">确认删除</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card card-pad">
+                  <div class="section-title"><h2>Toast 消息</h2></div>
+                  <div class="toast-stack">
+                    <div class="toast"><span class="toast-dot"></span><div><strong>故事已保存</strong><p class="tiny">可以在时间轴中查看最新内容。</p></div></div>
+                    <div class="toast error"><span class="toast-dot"></span><div><strong>保存失败</strong><p class="tiny">请稍后重试。</p></div></div>
+                    <div class="toast warning"><span class="toast-dot"></span><div><strong>请先填写故事标题</strong><p class="tiny">标题会用于列表和时间轴展示。</p></div></div>
+                    <div class="toast info"><span class="toast-dot"></span><div><strong>封面图已更新</strong><p class="tiny">新的封面会展示在故事卡片中。</p></div></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card card-pad">
+                <div class="section-title"><h2>Design System Snapshot</h2><span class="tiny">颜色、按钮、标签、表单</span></div>
+                <div class="system-grid">
+                  <div class="swatch"><div class="swatch-color" style="background: var(--peach-500)"></div><div><strong>Brand / Peach 500</strong><p class="tiny">#F28BA8</p></div></div>
+                  <div class="swatch"><div class="swatch-color" style="background: var(--blue)"></div><div><strong>Info / Blue</strong><p class="tiny">#7DB7E8</p></div></div>
+                  <div class="swatch"><div class="swatch-color" style="background: var(--green)"></div><div><strong>Success / Green</strong><p class="tiny">#7BCFA6</p></div></div>
+                  <div class="swatch"><div class="swatch-color" style="background: var(--red)"></div><div><strong>Danger / Red</strong><p class="tiny">#E76F7A</p></div></div>
+                </div>
+                <div class="component-row" style="margin-top: 20px">
+                  <button class="btn primary">主按钮</button>
+                  <button class="btn secondary">次按钮</button>
+                  <button class="btn danger">危险按钮</button>
+                  <button class="btn text">文字按钮</button>
+                  <span class="tag">生日</span>
+                  <span class="tag blue">日常</span>
+                  <span class="tag green">旅行</span>
+                  <span class="tag gray">成长</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      const labels = {
+        dashboard: "仪表盘",
+        stories: "故事管理",
+        create: "新增故事",
+        edit: "编辑故事",
+        upload: "图片组件",
+        login: "登录页",
+        states: "状态组件",
+      };
+
+      function showPage(id) {
+        document.querySelectorAll(".page").forEach((page) => {
+          page.classList.toggle("active", page.id === id);
+        });
+        document.querySelectorAll(".nav button").forEach((button) => {
+          button.classList.toggle("active", button.dataset.page === id);
+        });
+        document.getElementById("crumb-title").textContent = labels[id] || "仪表盘";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      document.querySelectorAll("[data-page]").forEach((button) => {
+        button.addEventListener("click", () => showPage(button.dataset.page));
+      });
+
+      document.querySelectorAll("[data-page-jump]").forEach((button) => {
+        button.addEventListener("click", () => showPage(button.dataset.pageJump));
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,59 @@
+version: "3.9"
+
+services:
+  app:
+    image: ${APP_IMAGE:-susu-time-machine:local}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: susu-time-machine
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DOCKER_DATABASE_URL:-file:/app/data/app.db}
+      APP_URL: ${APP_URL:-http://localhost:5174}
+    ports:
+      - "${APP_PORT:-5174}:3000"
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    command: ["sh", "-c", "npx prisma migrate deploy && npm run start"]
+
+  migrate:
+    image: ${APP_IMAGE:-susu-time-machine:local}
+    profiles:
+      - tools
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DOCKER_DATABASE_URL:-file:/app/data/app.db}
+    volumes:
+      - ./data:/app/data
+    entrypoint: ["npx", "prisma", "migrate", "deploy"]
+
+  admin-cli:
+    image: ${APP_IMAGE:-susu-time-machine:local}
+    profiles:
+      - tools
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DOCKER_DATABASE_URL:-file:/app/data/app.db}
+    volumes:
+      - ./data:/app/data
+    entrypoint: ["npm", "run", "seed"]
+
+# NOTE:
+# - This compose file does NOT start a database container.
+# - The app uses SQLite via DATABASE_URL=file:/app/data/app.db inside Docker.
+# - SQLite data persists in the host directory ./data.
+# - Set ADMIN_USERNAME and ADMIN_PASSWORD in .env before running admin-cli.
