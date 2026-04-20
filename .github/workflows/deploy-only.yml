@@ -12,6 +12,7 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
   APP_IMAGE_NAME: 'ghcr.io/${{ github.repository_owner }}/susu-time-machine'
+  LOCAL_IMAGE_NAME: 'susu-time-machine:local'
   REMOTE_APP_DIR: '/app/susu-time-machine'
   IMAGE_ARCHIVE: 'susu-time-machine-image.tar.gz'
 
@@ -38,7 +39,8 @@ jobs:
           IMAGE="${{ env.APP_IMAGE_NAME }}:${{ github.event.inputs.image_tag || 'latest' }}"
           docker pull "$IMAGE"
           docker tag "$IMAGE" "${{ env.APP_IMAGE_NAME }}:latest"
-          docker save "$IMAGE" "${{ env.APP_IMAGE_NAME }}:latest" | gzip > "${{ env.IMAGE_ARCHIVE }}"
+          docker tag "$IMAGE" "${{ env.LOCAL_IMAGE_NAME }}"
+          docker save "$IMAGE" "${{ env.APP_IMAGE_NAME }}:latest" "${{ env.LOCAL_IMAGE_NAME }}" | gzip > "${{ env.IMAGE_ARCHIVE }}"
           ls -lh "${{ env.IMAGE_ARCHIVE }}"
 
       - name: 🗂️ Prepare remote directory
@@ -88,7 +90,7 @@ jobs:
               find "${{ env.REMOTE_APP_DIR }}/backup" -name "app-*.db" -mtime +14 -delete || true
             fi
 
-            export APP_IMAGE="${{ env.APP_IMAGE_NAME }}:latest"
+            export APP_IMAGE="${{ env.LOCAL_IMAGE_NAME }}"
             export DOCKER_DATABASE_URL="file:/app/data/app.db"
             docker load -i "${{ env.IMAGE_ARCHIVE }}"
             docker compose up -d --remove-orphans app

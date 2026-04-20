@@ -244,7 +244,7 @@ APP_PORT=5174
 启动服务：
 
 ```bash
-docker compose up -d --build app
+docker compose up -d app
 ```
 
 首次部署或更新 schema 时，执行迁移：
@@ -257,6 +257,12 @@ docker compose --profile tools run --rm migrate
 
 ```bash
 docker compose --profile tools run --rm admin-cli
+```
+
+服务器部署时 `docker-compose.yml` 默认使用本地镜像标签 `susu-time-machine:local`，不需要服务器目录里存在 `Dockerfile`。首次手动执行 tools 命令前，请确认已经成功完成过一次 GitHub Actions 部署：
+
+```bash
+docker images | grep susu-time-machine
 ```
 
 查看日志：
@@ -318,6 +324,14 @@ docker run -d \
 - `.github/workflows/deploy-only.yml`：不重新构建，只部署已有镜像标签
 
 部署流程针对国内服务器做了优化：GitHub Actions 会把 Docker 镜像保存成 `susu-time-machine-image.tar.gz`，通过 SSH/SCP 上传到服务器，然后在服务器执行 `docker load`。服务器不再直接 `docker pull ghcr.io/...`，避免阿里云访问 GHCR 过慢或超时。
+
+部署后服务器本地会有一个镜像标签：
+
+```text
+susu-time-machine:local
+```
+
+`docker-compose.yml` 默认使用这个本地镜像标签，因此服务器目录不需要 `Dockerfile`，也不会现场构建镜像。
 
 需要在 GitHub 仓库的 `Settings -> Secrets and variables -> Actions` 里配置：
 
