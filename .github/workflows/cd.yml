@@ -26,11 +26,12 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
   APP_IMAGE_NAME: 'ghcr.io/${{ github.repository_owner }}/susu-time-machine'
   REMOTE_APP_DIR: '/app/susu-time-machine'
+  IMAGE_ARCHIVE: 'susu-time-machine-image.tar.gz'
 
 jobs:
   build-docker-image:
     name: 🐳 Build Docker Image
-    if: ${{ github.event_name == 'push' || github.event.inputs.build_and_push_image == 'true' }}
+    if: ${{ github.event_name == 'push' || github.event.inputs.build_and_push_image == 'true' || github.event.inputs.deploy == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -54,17 +55,35 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
-      - name: 🚢 Build and push APP image
+      - name: 🐳 Build APP image
         uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile
-          push: true
+          load: true
           tags: |
             ${{ env.APP_IMAGE_NAME }}:latest
             ${{ env.APP_IMAGE_NAME }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: 🚢 Push APP image to GHCR
+        if: ${{ github.event_name == 'push' || github.event.inputs.build_and_push_image == 'true' }}
+        run: |
+          docker push "${{ env.APP_IMAGE_NAME }}:latest"
+          docker push "${{ env.APP_IMAGE_NAME }}:${{ github.sha }}"
+
+      - name: 📦 Save APP image for direct server upload
+        run: |
+          docker save "${{ env.APP_IMAGE_NAME }}:latest" "${{ env.APP_IMAGE_NAME }}:${{ github.sha }}" | gzip > "${{ env.IMAGE_ARCHIVE }}"
+          ls -lh "${{ env.IMAGE_ARCHIVE }}"
+
+      - name: ⬆️ Upload image archive artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-image
+          path: ${{ env.IMAGE_ARCHIVE }}
+          retention-days: 1
 
   deploy-to-server:
     name: 🚀 Deploy to Server
@@ -78,13 +97,28 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v5
 
-      - name: 📤 Upload docker-compose.yml
+      - name: ⬇️ Download image archive artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: app-image
+          path: .
+
+      - name: 🗂️ Prepare remote directory
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            mkdir -p "${{ env.REMOTE_APP_DIR }}"
+
+      - name: 📤 Upload deploy files
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: docker-compose.yml
+          source: docker-compose.yml,${{ env.IMAGE_ARCHIVE }}
           target: ${{ env.REMOTE_APP_DIR }}
           overwrite: true
 
@@ -109,8 +143,6 @@ jobs:
               exit 1
             }
 
-            echo "${{ github.token }}" | docker login ghcr.io -u "${{ github.repository_owner }}" --password-stdin
-
             cd "${{ env.REMOTE_APP_DIR }}"
 
             if [ -f "${{ env.REMOTE_APP_DIR }}/data/app.db" ]; then
@@ -120,5 +152,6 @@ jobs:
 
             export APP_IMAGE="${{ env.APP_IMAGE_NAME }}:latest"
             export DOCKER_DATABASE_URL="file:/app/data/app.db"
-            docker compose pull app
+            docker load -i "${{ env.IMAGE_ARCHIVE }}"
             docker compose up -d --remove-orphans app
+            rm -f "${{ env.IMAGE_ARCHIVE }}"

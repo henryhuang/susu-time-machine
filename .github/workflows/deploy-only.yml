@@ -13,6 +13,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
   APP_IMAGE_NAME: 'ghcr.io/${{ github.repository_owner }}/susu-time-machine'
   REMOTE_APP_DIR: '/app/susu-time-machine'
+  IMAGE_ARCHIVE: 'susu-time-machine-image.tar.gz'
 
 jobs:
   deploy-only:
@@ -25,13 +26,37 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v5
 
-      - name: 📤 Upload docker-compose.yml
+      - name: 🔑 Login to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: 📦 Pull and save APP image on GitHub runner
+        run: |
+          IMAGE="${{ env.APP_IMAGE_NAME }}:${{ github.event.inputs.image_tag || 'latest' }}"
+          docker pull "$IMAGE"
+          docker tag "$IMAGE" "${{ env.APP_IMAGE_NAME }}:latest"
+          docker save "$IMAGE" "${{ env.APP_IMAGE_NAME }}:latest" | gzip > "${{ env.IMAGE_ARCHIVE }}"
+          ls -lh "${{ env.IMAGE_ARCHIVE }}"
+
+      - name: 🗂️ Prepare remote directory
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            mkdir -p "${{ env.REMOTE_APP_DIR }}"
+
+      - name: 📤 Upload deploy files
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: docker-compose.yml
+          source: docker-compose.yml,${{ env.IMAGE_ARCHIVE }}
           target: ${{ env.REMOTE_APP_DIR }}
           overwrite: true
 
@@ -56,8 +81,6 @@ jobs:
               exit 1
             }
 
-            echo "${{ github.token }}" | docker login ghcr.io -u "${{ github.repository_owner }}" --password-stdin
-
             cd "${{ env.REMOTE_APP_DIR }}"
 
             if [ -f "${{ env.REMOTE_APP_DIR }}/data/app.db" ]; then
@@ -65,7 +88,8 @@ jobs:
               find "${{ env.REMOTE_APP_DIR }}/backup" -name "app-*.db" -mtime +14 -delete || true
             fi
 
-            export APP_IMAGE="${{ env.APP_IMAGE_NAME }}:${{ github.event.inputs.image_tag || 'latest' }}"
+            export APP_IMAGE="${{ env.APP_IMAGE_NAME }}:latest"
             export DOCKER_DATABASE_URL="file:/app/data/app.db"
-            docker compose pull app
+            docker load -i "${{ env.IMAGE_ARCHIVE }}"
             docker compose up -d --remove-orphans app
+            rm -f "${{ env.IMAGE_ARCHIVE }}"

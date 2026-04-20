@@ -317,6 +317,8 @@ docker run -d \
 - `.github/workflows/cd.yml`：push 到 `main` / `dev` 或手动触发时，构建镜像并部署
 - `.github/workflows/deploy-only.yml`：不重新构建，只部署已有镜像标签
 
+部署流程针对国内服务器做了优化：GitHub Actions 会把 Docker 镜像保存成 `susu-time-machine-image.tar.gz`，通过 SSH/SCP 上传到服务器，然后在服务器执行 `docker load`。服务器不再直接 `docker pull ghcr.io/...`，避免阿里云访问 GHCR 过慢或超时。
+
 需要在 GitHub 仓库的 `Settings -> Secrets and variables -> Actions` 里配置：
 
 ```text
@@ -356,6 +358,8 @@ TENCENT_COS_UPLOAD_PREFIX="mini-app/user-susu"
 ```text
 ghcr.io/<github-owner>/susu-time-machine
 ```
+
+`deploy-only.yml` 仍然支持选择已有镜像标签，但拉取 GHCR 的动作发生在 GitHub runner 上，不发生在阿里云服务器上。
 
 ## 初始化管理员的方法
 
