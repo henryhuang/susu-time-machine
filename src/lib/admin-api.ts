@@ -4,6 +4,7 @@ type GenerateStoryDraftPayload = {
   storyDate: string;
   tags: string[];
   content: string;
+  aiPrompt: string;
   imageUrls: string[];
 };
 
@@ -19,5 +20,5 @@ export async function generateStoryDraft(payload: GenerateStoryDraftPayload) {
     throw new Error(data.message || "正文生成失败");
   }
 
-  return data as { content: string };
+  return data as { content: string; summary?: string };
 }

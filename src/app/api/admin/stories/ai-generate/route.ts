@@ -9,6 +9,7 @@ const schema = z.object({
   storyDate: z.string().optional().default(""),
   tags: z.array(z.string()).optional().default([]),
   content: z.string().optional().default(""),
+  aiPrompt: z.string().max(500).optional().default(""),
   imageUrls: z.array(z.string().url()).optional().default([])
 });
 
@@ -29,10 +30,19 @@ export async function POST(request: NextRequest) {
     titleLength: payload.title.length,
     summaryLength: payload.summary.length,
     contentLength: payload.content.length,
+    aiPromptLength: payload.aiPrompt.length,
     storyDate: payload.storyDate,
     tagCount: payload.tags.length,
     imageCount: payload.imageUrls.length
   });
+
+  const shouldGenerateSummary = !payload.summary.trim();
+  const shouldGenerateContent = !payload.content.trim();
+
+  if (!shouldGenerateSummary && !shouldGenerateContent) {
+    console.warn("[AI API] summary and content already exist");
+    return NextResponse.json({ message: "摘要和正文都已有内容，无需生成。" }, { status: 400 });
+  }
 
   if (!payload.title && !payload.summary && !payload.content) {
     console.warn("[AI API] empty text fields");
@@ -40,9 +50,14 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const content = await generateStoryContent(payload);
-    console.log("[AI API] generation success", { contentLength: content.length });
-    return NextResponse.json({ content });
+    const draft = await generateStoryContent(payload);
+    const summary = shouldGenerateSummary ? draft.summary : undefined;
+    const content = shouldGenerateContent ? draft.content : undefined;
+    console.log("[AI API] generation success", {
+      contentLength: content?.length || 0,
+      summaryLength: summary?.length || 0
+    });
+    return NextResponse.json({ content, summary });
   } catch (error) {
     console.error("AI story generation failed:", error);
     let message = "正文生成失败，请稍后再试。";

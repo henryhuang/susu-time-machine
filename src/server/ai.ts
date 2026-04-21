@@ -6,7 +6,13 @@ type GenerateStoryContentInput = {
   storyDate: string;
   tags: string[];
   content: string;
+  aiPrompt: string;
   imageUrls: string[];
+};
+
+type GeneratedStoryDraft = {
+  content: string;
+  summary?: string;
 };
 
 type ChatMessage =
@@ -42,15 +48,20 @@ function getClient() {
 }
 
 function buildPrompt(input: GenerateStoryContentInput) {
+  const shouldGenerateSummary = !input.summary.trim();
+  const shouldGenerateContent = !input.content.trim();
   const lines = [
     `标题：${input.title || "未填写"}`,
     `摘要：${input.summary || "未填写"}`,
     `故事日期：${input.storyDate || "未填写"}`,
     `标签：${input.tags.length > 0 ? input.tags.join("、") : "未填写"}`,
-    `已有正文：${input.content || "无"}`
+    `已有正文：${input.content || "无"}`,
+    `我想表达的关键语句：${input.aiPrompt || "未填写"}`,
+    `是否需要生成摘要：${shouldGenerateSummary ? "是，摘要为空，请生成 summary" : "否，摘要已有内容，不要生成 summary"}`,
+    `是否需要生成正文：${shouldGenerateContent ? "是，正文为空，请生成 content" : "否，正文已有内容，不要生成 content"}`
   ];
 
-  lines.push("请基于以上信息写一段适合记录女儿成长瞬间的正文。");
+  lines.push("请基于以上信息生成缺失字段，并严格遵守不覆盖已有摘要和正文的要求。");
 
   return lines.join("\n\n");
 }
@@ -62,12 +73,39 @@ function systemPrompt() {
     "文风要温柔、真实、有纪念感，但不要过度煽情，不要夸张。",
     "不要编造用户没有提供、也无法确认的细节。",
     "如果信息不足，就基于标题、摘要、日期、标签和已有正文做自然扩写。",
+    "优先尊重“我想表达的关键语句”，把它作为情绪重点和表达方向，但不要生硬照抄。",
     "如果提供了图片，只把图片中能明确观察到的内容作为辅助，不要猜测无法确认的人物身份、地点、关系或事件。",
-    "只输出正文，不要加标题、分点、解释、提示语或引号。"
+    "必须只输出 JSON，不要输出 Markdown、解释、代码块或额外文本。",
+    "JSON 可包含字段：content 和 summary。",
+    "content 是 300 到 800 字正文；summary 是 80 字以内摘要。",
+    "如果用户已有摘要，不要生成 summary 字段。",
+    "如果用户已有正文，不要生成 content 字段。"
   ].join("\n");
 }
 
-async function complete(messages: ChatMessage[]) {
+function parseDraft(text: string): GeneratedStoryDraft {
+  const normalized = text
+    .trim()
+    .replace(/^```(?:json)?/i, "")
+    .replace(/```$/i, "")
+    .trim();
+
+  try {
+    const parsed = JSON.parse(normalized) as Partial<GeneratedStoryDraft>;
+    if (typeof parsed.content === "string" && parsed.content.trim()) {
+      return {
+        content: parsed.content.trim(),
+        summary: typeof parsed.summary === "string" && parsed.summary.trim() ? parsed.summary.trim() : undefined
+      };
+    }
+  } catch {
+    // Fall through and treat the model output as plain content.
+  }
+
+  return { content: normalized };
+}
+
+async function complete(messages: ChatMessage[]): Promise<GeneratedStoryDraft> {
   const model = process.env.QWEN_MODEL || "qwen3.6-plus";
 
   const completion = await getClient().chat.completions.create({
@@ -88,7 +126,7 @@ async function complete(messages: ChatMessage[]) {
     throw new Error("AI did not return any text.");
   }
 
-  return text;
+  return parseDraft(text);
 }
 
 async function generateTextOnly(prompt: string) {
@@ -136,7 +174,7 @@ async function generateWithImages(prompt: string, imageUrls: string[]) {
   ]);
 }
 
-export async function generateStoryContent(input: GenerateStoryContentInput) {
+export async function generateStoryContent(input: GenerateStoryContentInput): Promise<GeneratedStoryDraft> {
   const model = process.env.QWEN_MODEL || "qwen3.6-plus";
   const prompt = buildPrompt(input);
   const imageUrls = input.imageUrls.filter(Boolean);
@@ -146,6 +184,7 @@ export async function generateStoryContent(input: GenerateStoryContentInput) {
     titleLength: input.title.length,
     summaryLength: input.summary.length,
     contentLength: input.content.length,
+    aiPromptLength: input.aiPrompt.length,
     tagCount: input.tags.length,
     imageCount: imageUrls.length,
     timeoutMs: Number(process.env.AI_REQUEST_TIMEOUT_MS || 45000)

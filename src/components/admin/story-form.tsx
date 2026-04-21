@@ -23,6 +23,7 @@ export function StoryForm({ story }: { story?: StoryDTO }) {
   const [tags, setTags] = useState(story?.tags.join("，") || "");
   const [coverImage, setCoverImage] = useState(story?.coverImage || "");
   const [images, setImages] = useState(initialImages);
+  const [aiPrompt, setAiPrompt] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -66,6 +67,14 @@ export function StoryForm({ story }: { story?: StoryDTO }) {
   }
 
   async function handleGenerate() {
+    const shouldGenerateSummary = !summary.trim();
+    const shouldGenerateContent = !content.trim();
+
+    if (!shouldGenerateSummary && !shouldGenerateContent) {
+      setToast("摘要和正文都已有内容，无需生成。");
+      return;
+    }
+
     setGenerating(true);
     setToast("");
 
@@ -76,9 +85,15 @@ export function StoryForm({ story }: { story?: StoryDTO }) {
         storyDate,
         tags: tags.split(/[,，]/).map((tag) => tag.trim()).filter(Boolean),
         content,
+        aiPrompt,
         imageUrls: images.map((image) => image.imageUrl)
       });
-      setContent(data.content);
+      if (shouldGenerateContent && data.content?.trim()) {
+        setContent(data.content.trim());
+      }
+      if (shouldGenerateSummary && data.summary?.trim()) {
+        setSummary(data.summary.trim());
+      }
     } catch (err) {
       setToast(err instanceof Error ? err.message : "正文生成失败");
     } finally {
@@ -101,6 +116,15 @@ export function StoryForm({ story }: { story?: StoryDTO }) {
           </Field>
           <Field label="正文" hint="首版使用多行文本保存，前台会按段落展示。">
             <Textarea value={content} onChange={(event) => setContent(event.target.value)} required className="min-h-64" placeholder="记录今天发生了什么，酥酥说了什么，或者这一刻为什么值得留下。" />
+          </Field>
+          <Field label="想表达的关键语句" hint="不会保存到数据库，只会在本次 AI 生成时作为写作方向。">
+            <Textarea
+              value={aiPrompt}
+              onChange={(event) => setAiPrompt(event.target.value)}
+              maxLength={500}
+              className="min-h-24"
+              placeholder="例如：想写出她第一次主动分享玩具时的认真和开心，不要写得太夸张。"
+            />
           </Field>
           <div className="flex flex-wrap items-center gap-3">
             <Button type="button" variant="secondary" onClick={handleGenerate} disabled={generating}>
