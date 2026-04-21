@@ -18,3 +18,46 @@ export const storyInputSchema = z.object({
 });
 
 export type StoryInput = z.infer<typeof storyInputSchema>;
+
+const optionalProfileText = z
+  .string()
+  .trim()
+  .max(240, "内容不要超过 240 个字")
+  .optional()
+  .transform((value) => value || undefined);
+
+const optionalProfileUrl = z
+  .string()
+  .trim()
+  .max(1000, "链接不要超过 1000 个字")
+  .optional()
+  .transform((value) => value || undefined);
+
+export const miniProgramAccessCheckSchema = z
+  .object({
+    openId: optionalProfileText,
+    unionId: optionalProfileText,
+    nickname: optionalProfileText,
+    avatarUrl: optionalProfileUrl,
+    phone: optionalProfileText
+  })
+  .refine((value) => value.openId || value.unionId, {
+    message: "请提供 openId 或 unionId"
+  });
+
+export const miniProgramUserInputSchema = z
+  .object({
+    openId: optionalProfileText,
+    unionId: optionalProfileText,
+    nickname: optionalProfileText,
+    avatarUrl: optionalProfileUrl,
+    phone: optionalProfileText,
+    remark: optionalProfileText,
+    allowed: z.boolean().default(true)
+  })
+  .refine((value) => value.openId || value.unionId, {
+    message: "请填写 openId 或 unionId"
+  });
+
+export type MiniProgramAccessCheckInput = z.infer<typeof miniProgramAccessCheckSchema>;
+export type MiniProgramUserInput = z.infer<typeof miniProgramUserInputSchema>;

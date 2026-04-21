@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LayoutDashboard, LogOut, Plus, Upload, Rows3 } from "lucide-react";
+import { LayoutDashboard, LogOut, Plus, Upload, Rows3, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function AdminShell({ children, username }: { children: React.ReactNode; username: string }) {
@@ -16,6 +16,7 @@ export function AdminShell({ children, username }: { children: React.ReactNode; 
         <nav className="grid gap-2">
           <AdminNavLink href="/admin" icon={<LayoutDashboard className="h-4 w-4" />} label="仪表盘" />
           <AdminNavLink href="/admin/stories" icon={<Rows3 className="h-4 w-4" />} label="故事管理" />
+          <AdminNavLink href="/admin/mini-users" icon={<Users className="h-4 w-4" />} label="小程序权限" />
           <AdminNavLink href="/admin/stories/new" icon={<Plus className="h-4 w-4" />} label="新增故事" />
           <AdminNavLink href="/admin/stories/new#images" icon={<Upload className="h-4 w-4" />} label="上传图片" />
         </nav>

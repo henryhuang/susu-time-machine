@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Images, PenLine, Rows3 } from "lucide-react";
+import { Images, Rows3, Users } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { formatDate } from "@/lib/dates";
 import { getImageUrl } from "@/lib/images";
@@ -11,9 +11,10 @@ import { ProtectedAdmin } from "@/components/admin/protected-admin";
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
-  const [totalStories, totalImages, recent] = await Promise.all([
+  const [totalStories, totalImages, allowedMiniUsers, recent] = await Promise.all([
     prisma.story.count(),
     prisma.storyImage.count(),
+    prisma.miniProgramUser.count({ where: { allowed: true } }),
     listStories({ pageSize: 3 })
   ]);
 
@@ -40,7 +41,7 @@ export default async function AdminDashboardPage() {
       <section className="grid gap-4 md:grid-cols-3">
         <Stat label="故事总数" value={totalStories} icon={<Rows3 className="h-5 w-5" />} />
         <Stat label="图片总数" value={totalImages} icon={<Images className="h-5 w-5" />} tone="blue" />
-        <Stat label="快捷入口" value="新增" icon={<PenLine className="h-5 w-5" />} tone="green" href="/admin/stories/new" />
+        <Stat label="授权用户" value={allowedMiniUsers} icon={<Users className="h-5 w-5" />} tone="green" href="/admin/mini-users" />
       </section>
 
       <section className="rounded-lg border border-susu-line bg-white p-5 shadow-card">

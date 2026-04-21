@@ -1,6 +1,6 @@
 # 酥酥时光机小程序接入 API 文档
 
-这份文档用于给“小程序项目里的 Codex”作为开发上下文。小程序只负责展示酥酥成长故事，不需要后台登录，也不需要调用管理接口。
+这份文档用于给“小程序项目里的 Codex”作为 API 参考。更任务化的接入说明见 `docs/miniprogram-codex-guide.md`。小程序只负责展示酥酥成长故事，不需要后台登录，也不需要调用管理接口。
 
 ## 1. 接入目标
 
@@ -13,7 +13,7 @@
 - 标签
 - 故事日期
 
-当前公开 API 不需要登录，不需要 Cookie，不需要 Token。
+当前小程序先调用访问权限检查接口。通过后再读取故事列表和详情；不需要后台登录 Cookie，也不要调用管理接口。
 
 ## 2. 线上服务地址
 
@@ -39,6 +39,7 @@ const API_BASE_URL = "http://susu-time-machine.cnhalo.com";
 
 | 场景 | 方法 | 路径 |
 | --- | --- | --- |
+| 检查用户访问权限 | POST | `/api/public/access/check` |
 | 获取故事列表 | GET | `/api/public/stories` |
 | 获取故事详情 | GET | `/api/public/stories/:id` |
 
@@ -50,7 +51,101 @@ const API_BASE_URL = "http://susu-time-machine.cnhalo.com";
 /api/upload/*
 ```
 
-## 4. 获取故事列表
+## 4. 检查用户访问权限
+
+小程序启动后先调用这个接口。当前版本按白名单控制：后台管理页把用户设为“允许访问”后，接口返回 `allowed: true`。
+
+### 请求
+
+```http
+POST /api/public/access/check
+Content-Type: application/json
+```
+
+完整示例：
+
+```text
+http://susu-time-machine.cnhalo.com/api/public/access/check
+```
+
+### Body 参数
+
+| 参数 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `openId` | string | 条件必填 | 微信用户 openid，`openId` 和 `unionId` 至少传一个 |
+| `unionId` | string | 条件必填 | 微信 unionid，`openId` 和 `unionId` 至少传一个 |
+| `nickname` | string | 否 | 昵称，用于后台识别 |
+| `avatarUrl` | string | 否 | 头像 URL |
+| `phone` | string | 否 | 手机号，可后续接入手机号授权后传入 |
+
+请求示例：
+
+```json
+{
+  "openId": "oWxExampleOpenId",
+  "nickname": "酥酥家人"
+}
+```
+
+### 响应示例
+
+已允许访问：
+
+```json
+{
+  "allowed": true,
+  "permissions": ["story:read"],
+  "user": {
+    "id": "cmoxxxxx001",
+    "openId": "oWxExampleOpenId",
+    "unionId": null,
+    "nickname": "酥酥家人",
+    "avatarUrl": null,
+    "phone": null,
+    "remark": "家人",
+    "allowed": true,
+    "source": "manual",
+    "lastCheckedAt": "2026-04-21T08:00:00.000Z",
+    "lastAllowedAt": "2026-04-21T08:00:00.000Z",
+    "createdAt": "2026-04-21T07:00:00.000Z",
+    "updatedAt": "2026-04-21T08:00:00.000Z"
+  }
+}
+```
+
+未允许访问：
+
+```json
+{
+  "allowed": false,
+  "permissions": [],
+  "user": {
+    "id": "cmoxxxxx002",
+    "openId": "oWxPendingOpenId",
+    "unionId": null,
+    "nickname": "待审核用户",
+    "avatarUrl": null,
+    "phone": null,
+    "remark": null,
+    "allowed": false,
+    "source": "mini-program",
+    "lastCheckedAt": "2026-04-21T08:00:00.000Z",
+    "lastAllowedAt": null,
+    "createdAt": "2026-04-21T08:00:00.000Z",
+    "updatedAt": "2026-04-21T08:00:00.000Z"
+  }
+}
+```
+
+如果用户不存在，服务端会自动创建一条 `allowed: false` 的待审核记录。管理员进入后台「小程序权限」页面打开允许访问即可。
+
+### 小程序端建议
+
+- `allowed === true`：进入故事列表，继续调用 `/api/public/stories`
+- `allowed === false`：展示无权限页面，例如“暂未开通访问，请联系管理员”
+- 权限判断只需要在进入小程序时执行一次。进入后浏览列表、详情、分页、刷新等普通操作不需要重复调用权限检查接口。
+
+## 5. 获取故事列表
 
 ### 请求
 
@@ -128,7 +223,7 @@ http://susu-time-machine.cnhalo.com/api/public/stories?page=1&pageSize=10
 - 上拉加载更多时，如果 `hasMore === true`，请求下一页
 - 如果 `hasMore === false`，停止继续请求
 
-## 5. 获取故事详情
+## 6. 获取故事详情
 
 ### 请求
 
@@ -196,7 +291,7 @@ HTTP 状态码：
 404
 ```
 
-## 6. Story 数据结构
+## 7. Story 数据结构
 
 小程序端可以按下面的 TypeScript 类型建模：
 
@@ -234,7 +329,7 @@ export type StoryDetailResponse = {
 };
 ```
 
-## 7. 日期处理建议
+## 8. 日期处理建议
 
 接口返回的时间是 ISO 字符串：
 
@@ -269,7 +364,7 @@ export function formatStoryDateStable(value: string) {
 }
 ```
 
-## 8. 图片处理建议
+## 9. 图片处理建议
 
 图片字段：
 
@@ -303,7 +398,7 @@ https://susu-img-wx.cnhalo.com
 
 如果微信后台不允许配置 HTTP request 域名，生产服务需要切换到 HTTPS。
 
-## 9. 微信小程序请求封装示例
+## 10. 微信小程序请求封装示例
 
 ```ts
 const API_BASE_URL = "http://susu-time-machine.cnhalo.com";
@@ -334,7 +429,7 @@ export function request<T>({ url, method = "GET", data }: RequestOptions): Promi
 }
 ```
 
-## 10. 小程序 API 方法示例
+## 11. 小程序 API 方法示例
 
 ```ts
 export function fetchStories(page = 1, pageSize = 10) {
@@ -348,9 +443,33 @@ export function fetchStoryDetail(id: string) {
     url: `/api/public/stories/${id}`
   });
 }
+
+export function checkAccess(profile: {
+  openId?: string;
+  unionId?: string;
+  nickname?: string;
+  avatarUrl?: string;
+  phone?: string;
+}) {
+  return request<{
+    allowed: boolean;
+    permissions: string[];
+    user: {
+      id: string;
+      openId: string | null;
+      unionId: string | null;
+      nickname: string | null;
+      allowed: boolean;
+    };
+  }>({
+    url: "/api/public/access/check",
+    method: "POST",
+    data: profile
+  });
+}
 ```
 
-## 11. 页面实现建议
+## 12. 页面实现建议
 
 ### 时间轴 / 列表页
 
@@ -390,7 +509,7 @@ type State = {
 - 图片数组按 `sortOrder` 排序
 - 点击图片调用 `wx.previewImage`
 
-## 12. 错误和空状态
+## 13. 错误和空状态
 
 列表为空：
 
@@ -404,6 +523,12 @@ type State = {
 故事加载失败，请稍后再试
 ```
 
+无访问权限：
+
+```text
+暂未开通访问，请联系管理员
+```
+
 详情 404：
 
 ```text
@@ -415,7 +540,7 @@ type State = {
 - 使用本地默认图
 - 不要影响整页展示
 
-## 13. 注意事项
+## 14. 注意事项
 
 1. 小程序只调用 `/api/public/*`。
 2. 不要在小程序里保存或使用后台管理员账号密码。
@@ -426,7 +551,7 @@ type State = {
 7. 如果后端域名从 HTTP 切到 HTTPS，只改 `API_BASE_URL`。
 8. 微信正式版通常要求 HTTPS 合法域名；如果当前 HTTP 域名无法加入合法域名，需要给网站配置 HTTPS。
 
-## 14. 给小程序 Codex 的任务描述
+## 15. 给小程序 Codex 的任务描述
 
 可以把下面这段直接交给小程序项目里的 Codex：
 
@@ -434,16 +559,18 @@ type State = {
 请基于 docs/miniprogram-api.md 接入酥酥时光机公开 API。
 
 目标：
-1. 在小程序中实现成长故事列表页，调用 GET /api/public/stories?page=1&pageSize=10。
-2. 支持下拉刷新和上拉加载更多。
-3. 列表卡片展示 coverImage、title、summary、storyDate、tags。
-4. 点击故事进入详情页。
-5. 详情页调用 GET /api/public/stories/:id。
-6. 详情页展示 title、storyDate、tags、coverImage、content 和 images。
-7. content 按换行分段渲染。
-8. images 按 sortOrder 排序，点击图片使用 wx.previewImage 预览。
-9. coverImage 为空或图片加载失败时使用本地默认图。
-10. 只调用 /api/public/*，不要调用后台管理接口。
+1. 小程序进入时，先拿到微信 openid，再调用一次 POST /api/public/access/check。
+2. 如果 allowed 为 false，展示无权限页面，不进入故事列表。
+3. 如果 allowed 为 true，实现成长故事列表页，调用 GET /api/public/stories?page=1&pageSize=10；后续浏览列表、详情、分页、刷新都不要重复调用权限检查接口。
+4. 支持下拉刷新和上拉加载更多。
+5. 列表卡片展示 coverImage、title、summary、storyDate、tags。
+6. 点击故事进入详情页。
+7. 详情页调用 GET /api/public/stories/:id。
+8. 详情页展示 title、storyDate、tags、coverImage、content 和 images。
+9. content 按换行分段渲染。
+10. images 按 sortOrder 排序，点击图片使用 wx.previewImage 预览。
+11. coverImage 为空或图片加载失败时使用本地默认图。
+12. 只调用 /api/public/*，不要调用后台管理接口。
 
 Base URL：
 http://susu-time-machine.cnhalo.com

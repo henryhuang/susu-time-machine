@@ -41,3 +41,22 @@ model StoryImage {
 
   @@index([storyId, sortOrder])
 }
+
+model MiniProgramUser {
+  id            String    @id @default(cuid())
+  openId        String?   @unique
+  unionId       String?   @unique
+  nickname      String?
+  avatarUrl     String?
+  phone         String?
+  remark        String?
+  allowed       Boolean   @default(false)
+  source        String    @default("manual")
+  lastCheckedAt DateTime?
+  lastAllowedAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([allowed, updatedAt])
+  @@index([nickname])
+}
