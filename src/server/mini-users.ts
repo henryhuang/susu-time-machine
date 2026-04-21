@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { MiniProgramAccessCheckInput, MiniProgramUserInput } from "@/lib/validators";
+import { MiniProgramAccessApplyInput, MiniProgramAccessCheckInput, MiniProgramUserInput } from "@/lib/validators";
 
 type MiniProgramUserRecord = NonNullable<Awaited<ReturnType<typeof prisma.miniProgramUser.findFirst>>>;
 
@@ -17,8 +17,25 @@ export function serializeMiniProgramUser(user: MiniProgramUserRecord) {
     source: user.source,
     lastCheckedAt: user.lastCheckedAt?.toISOString() ?? null,
     lastAllowedAt: user.lastAllowedAt?.toISOString() ?? null,
+    applicationSubmittedAt: user.applicationSubmittedAt?.toISOString() ?? null,
     createdAt: user.createdAt.toISOString(),
     updatedAt: user.updatedAt.toISOString()
+  };
+}
+
+function getApplicationStatus(user: MiniProgramUserRecord) {
+  if (user.allowed) return "approved" as const;
+  if (user.applicationSubmittedAt) return "pending" as const;
+  return "not_applied" as const;
+}
+
+function accessResponse(user: MiniProgramUserRecord) {
+  return {
+    allowed: user.allowed,
+    permissions: user.allowed ? ["story:read"] : [],
+    applicationStatus: getApplicationStatus(user),
+    applicationSubmittedAt: user.applicationSubmittedAt?.toISOString() ?? null,
+    user: serializeMiniProgramUser(user)
   };
 }
 
@@ -29,13 +46,18 @@ function identityWhere(input: { openId?: string; unionId?: string }) {
   ].filter(Boolean) as Prisma.MiniProgramUserWhereInput[];
 }
 
-function accessProfileData(input: MiniProgramAccessCheckInput) {
+function identityData(input: MiniProgramAccessCheckInput | MiniProgramAccessApplyInput) {
   return {
     ...(input.openId ? { openId: input.openId } : {}),
-    ...(input.unionId ? { unionId: input.unionId } : {}),
+    ...(input.unionId ? { unionId: input.unionId } : {})
+  };
+}
+
+function applicationProfileData(input: MiniProgramAccessApplyInput) {
+  return {
+    ...identityData(input),
     ...(input.nickname ? { nickname: input.nickname } : {}),
-    ...(input.avatarUrl ? { avatarUrl: input.avatarUrl } : {}),
-    ...(input.phone ? { phone: input.phone } : {})
+    ...(input.avatarUrl ? { avatarUrl: input.avatarUrl } : {})
   };
 }
 
@@ -59,25 +81,50 @@ export async function checkMiniProgramAccess(input: MiniProgramAccessCheckInput)
     ? await prisma.miniProgramUser.update({
         where: { id: existing.id },
         data: {
-          ...accessProfileData(input),
+          ...identityData(input),
           lastCheckedAt: now,
           lastAllowedAt: existing.allowed ? now : existing.lastAllowedAt
         }
       })
     : await prisma.miniProgramUser.create({
         data: {
-          ...accessProfileData(input),
+          ...identityData(input),
           source: "mini-program",
           allowed: false,
           lastCheckedAt: now
         }
       });
 
-  return {
-    allowed: user.allowed,
-    permissions: user.allowed ? ["story:read"] : [],
-    user: serializeMiniProgramUser(user)
-  };
+  return accessResponse(user);
+}
+
+export async function applyMiniProgramAccess(input: MiniProgramAccessApplyInput) {
+  const now = new Date();
+  const existing = await prisma.miniProgramUser.findFirst({
+    where: { OR: identityWhere(input) }
+  });
+
+  const user = existing
+    ? await prisma.miniProgramUser.update({
+        where: { id: existing.id },
+        data: {
+          ...applicationProfileData(input),
+          applicationSubmittedAt: existing.applicationSubmittedAt ?? now,
+          lastCheckedAt: now,
+          lastAllowedAt: existing.allowed ? now : existing.lastAllowedAt
+        }
+      })
+    : await prisma.miniProgramUser.create({
+        data: {
+          ...applicationProfileData(input),
+          source: "mini-program",
+          allowed: false,
+          applicationSubmittedAt: now,
+          lastCheckedAt: now
+        }
+      });
+
+  return accessResponse(user);
 }
 
 export async function listMiniProgramUsers(options?: {

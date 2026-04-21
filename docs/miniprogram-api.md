@@ -41,6 +41,7 @@ const API_BASE_URL = "http://susu-time-machine.cnhalo.com";
 | --- | --- | --- |
 | 微信登录换 openId | POST | `/api/public/wechat/login` |
 | 检查用户访问权限 | POST | `/api/public/access/check` |
+| 提交访问申请 | POST | `/api/public/access/apply` |
 | 获取故事列表 | GET | `/api/public/stories` |
 | 获取故事详情 | GET | `/api/public/stories/:id` |
 
@@ -121,16 +122,12 @@ http://susu-time-machine.cnhalo.com/api/public/access/check
 | --- | --- | --- | --- |
 | `openId` | string | 条件必填 | 微信用户 openid，`openId` 和 `unionId` 至少传一个 |
 | `unionId` | string | 条件必填 | 微信 unionid，`openId` 和 `unionId` 至少传一个 |
-| `nickname` | string | 否 | 昵称，用于后台识别 |
-| `avatarUrl` | string | 否 | 头像 URL |
-| `phone` | string | 否 | 手机号，可后续接入手机号授权后传入 |
 
 请求示例：
 
 ```json
 {
-  "openId": "oWxExampleOpenId",
-  "nickname": "酥酥家人"
+  "openId": "oWxExampleOpenId"
 }
 ```
 
@@ -142,6 +139,8 @@ http://susu-time-machine.cnhalo.com/api/public/access/check
 {
   "allowed": true,
   "permissions": ["story:read"],
+  "applicationStatus": "approved",
+  "applicationSubmittedAt": "2026-04-21T08:00:00.000Z",
   "user": {
     "id": "cmoxxxxx001",
     "openId": "oWxExampleOpenId",
@@ -154,6 +153,7 @@ http://susu-time-machine.cnhalo.com/api/public/access/check
     "source": "manual",
     "lastCheckedAt": "2026-04-21T08:00:00.000Z",
     "lastAllowedAt": "2026-04-21T08:00:00.000Z",
+    "applicationSubmittedAt": "2026-04-21T08:00:00.000Z",
     "createdAt": "2026-04-21T07:00:00.000Z",
     "updatedAt": "2026-04-21T08:00:00.000Z"
   }
@@ -166,6 +166,8 @@ http://susu-time-machine.cnhalo.com/api/public/access/check
 {
   "allowed": false,
   "permissions": [],
+  "applicationStatus": "not_applied",
+  "applicationSubmittedAt": null,
   "user": {
     "id": "cmoxxxxx002",
     "openId": "oWxPendingOpenId",
@@ -178,21 +180,69 @@ http://susu-time-machine.cnhalo.com/api/public/access/check
     "source": "mini-program",
     "lastCheckedAt": "2026-04-21T08:00:00.000Z",
     "lastAllowedAt": null,
+    "applicationSubmittedAt": null,
     "createdAt": "2026-04-21T08:00:00.000Z",
     "updatedAt": "2026-04-21T08:00:00.000Z"
   }
 }
 ```
 
-如果用户不存在，服务端会自动创建一条 `allowed: false` 的待审核记录。管理员进入后台「小程序权限」页面打开允许访问即可。
+如果用户不存在，服务端会自动创建一条 `allowed: false` 的未申请记录。用户提交申请后，管理员进入后台「小程序权限」页面打开允许访问即可。
 
 ### 小程序端建议
 
 - `allowed === true`：进入故事列表，继续调用 `/api/public/stories`
-- `allowed === false`：展示无权限页面，例如“暂未开通访问，请联系管理员”
+- `applicationStatus === "not_applied"`：展示申请访问入口
+- `applicationStatus === "pending"`：展示“申请已提交，等待审核”
+- `applicationStatus === "approved"`：进入故事列表
 - 权限判断只需要在进入小程序时执行一次。进入后浏览列表、详情、分页、刷新等普通操作不需要重复调用权限检查接口。
 
-## 6. 获取故事列表
+## 6. 提交访问申请
+
+### 请求
+
+```http
+POST /api/public/access/apply
+Content-Type: application/json
+```
+
+完整示例：
+
+```text
+http://susu-time-machine.cnhalo.com/api/public/access/apply
+```
+
+### Body 参数
+
+| 参数 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `openId` | string | 条件必填 | 微信用户 openid，`openId` 和 `unionId` 至少传一个 |
+| `unionId` | string | 条件必填 | 微信 unionid，`openId` 和 `unionId` 至少传一个 |
+| `nickname` | string | 否 | 昵称，用于后台识别 |
+| `avatarUrl` | string | 否 | 头像 URL |
+
+请求示例：
+
+```json
+{
+  "openId": "oWxExampleOpenId",
+  "nickname": "酥酥家人",
+  "avatarUrl": "https://example.com/avatar.jpg"
+}
+```
+
+响应结构同 `/api/public/access/check`。如果管理员还未允许，提交后会返回：
+
+```json
+{
+  "allowed": false,
+  "permissions": [],
+  "applicationStatus": "pending",
+  "applicationSubmittedAt": "2026-04-21T08:00:00.000Z"
+}
+```
+
+## 7. 获取故事列表
 
 ### 请求
 
@@ -270,7 +320,7 @@ http://susu-time-machine.cnhalo.com/api/public/stories?page=1&pageSize=10
 - 上拉加载更多时，如果 `hasMore === true`，请求下一页
 - 如果 `hasMore === false`，停止继续请求
 
-## 7. 获取故事详情
+## 8. 获取故事详情
 
 ### 请求
 
@@ -338,7 +388,7 @@ HTTP 状态码：
 404
 ```
 
-## 8. Story 数据结构
+## 9. Story 数据结构
 
 小程序端可以按下面的 TypeScript 类型建模：
 
@@ -376,7 +426,7 @@ export type StoryDetailResponse = {
 };
 ```
 
-## 9. 日期处理建议
+## 10. 日期处理建议
 
 接口返回的时间是 ISO 字符串：
 
@@ -411,7 +461,7 @@ export function formatStoryDateStable(value: string) {
 }
 ```
 
-## 10. 图片处理建议
+## 11. 图片处理建议
 
 图片字段：
 
@@ -445,7 +495,7 @@ https://susu-img-wx.cnhalo.com
 
 如果微信后台不允许配置 HTTP request 域名，生产服务需要切换到 HTTPS。
 
-## 11. 微信小程序请求封装示例
+## 12. 微信小程序请求封装示例
 
 ```ts
 const API_BASE_URL = "http://susu-time-machine.cnhalo.com";
@@ -476,7 +526,7 @@ export function request<T>({ url, method = "GET", data }: RequestOptions): Promi
 }
 ```
 
-## 12. 小程序 API 方法示例
+## 13. 小程序 API 方法示例
 
 ```ts
 export function loginWechat(code: string) {
@@ -505,19 +555,19 @@ export function fetchStoryDetail(id: string) {
 export function checkAccess(profile: {
   openId?: string;
   unionId?: string;
-  nickname?: string;
-  avatarUrl?: string;
-  phone?: string;
 }) {
   return request<{
     allowed: boolean;
     permissions: string[];
+    applicationStatus: "not_applied" | "pending" | "approved";
+    applicationSubmittedAt: string | null;
     user: {
       id: string;
       openId: string | null;
       unionId: string | null;
       nickname: string | null;
       allowed: boolean;
+      applicationSubmittedAt: string | null;
     };
   }>({
     url: "/api/public/access/check",
@@ -525,9 +575,27 @@ export function checkAccess(profile: {
     data: profile
   });
 }
+
+export function applyAccess(profile: {
+  openId?: string;
+  unionId?: string;
+  nickname?: string;
+  avatarUrl?: string;
+}) {
+  return request<{
+    allowed: boolean;
+    permissions: string[];
+    applicationStatus: "not_applied" | "pending" | "approved";
+    applicationSubmittedAt: string | null;
+  }>({
+    url: "/api/public/access/apply",
+    method: "POST",
+    data: profile
+  });
+}
 ```
 
-## 13. 页面实现建议
+## 14. 页面实现建议
 
 ### 时间轴 / 列表页
 
@@ -567,7 +635,7 @@ type State = {
 - 图片数组按 `sortOrder` 排序
 - 点击图片调用 `wx.previewImage`
 
-## 14. 错误和空状态
+## 15. 错误和空状态
 
 列表为空：
 
@@ -598,7 +666,7 @@ type State = {
 - 使用本地默认图
 - 不要影响整页展示
 
-## 15. 注意事项
+## 16. 注意事项
 
 1. 小程序只调用 `/api/public/*`。
 2. 不要在小程序里保存或使用后台管理员账号密码。
@@ -610,7 +678,7 @@ type State = {
 8. 如果后端域名从 HTTP 切到 HTTPS，只改 `API_BASE_URL`。
 9. 微信正式版通常要求 HTTPS 合法域名；如果当前 HTTP 域名无法加入合法域名，需要给网站配置 HTTPS。
 
-## 16. 给小程序 Codex 的任务描述
+## 17. 给小程序 Codex 的任务描述
 
 可以把下面这段直接交给小程序项目里的 Codex：
 
@@ -620,17 +688,18 @@ type State = {
 目标：
 1. 小程序进入时，先调用 wx.login 获取 code，再调用 POST /api/public/wechat/login 换 openId。
 2. 拿到 openId 后，再调用一次 POST /api/public/access/check。
-3. 如果 allowed 为 false，展示无权限页面，不进入故事列表。
-4. 如果 allowed 为 true，实现成长故事列表页，调用 GET /api/public/stories?page=1&pageSize=10；后续浏览列表、详情、分页、刷新都不要重复调用权限检查接口。
-5. 支持下拉刷新和上拉加载更多。
-6. 列表卡片展示 coverImage、title、summary、storyDate、tags。
-7. 点击故事进入详情页。
-8. 详情页调用 GET /api/public/stories/:id。
-9. 详情页展示 title、storyDate、tags、coverImage、content 和 images。
-10. content 按换行分段渲染。
-11. images 按 sortOrder 排序，点击图片使用 wx.previewImage 预览。
-12. coverImage 为空或图片加载失败时使用本地默认图。
-13. 只调用 /api/public/*，不要调用后台管理接口。
+3. 如果 applicationStatus 为 not_applied，展示申请访问入口，用户点击后调用 POST /api/public/access/apply。
+4. 如果 applicationStatus 为 pending，展示“申请已提交，等待审核”，不进入故事列表。
+5. 如果 applicationStatus 为 approved，实现成长故事列表页，调用 GET /api/public/stories?page=1&pageSize=10；后续浏览列表、详情、分页、刷新都不要重复调用权限检查接口。
+6. 支持下拉刷新和上拉加载更多。
+7. 列表卡片展示 coverImage、title、summary、storyDate、tags。
+8. 点击故事进入详情页。
+9. 详情页调用 GET /api/public/stories/:id。
+10. 详情页展示 title、storyDate、tags、coverImage、content 和 images。
+11. content 按换行分段渲染。
+12. images 按 sortOrder 排序，点击图片使用 wx.previewImage 预览。
+13. coverImage 为空或图片加载失败时使用本地默认图。
+14. 只调用 /api/public/*，不要调用后台管理接口。
 
 Base URL：
 http://susu-time-machine.cnhalo.com

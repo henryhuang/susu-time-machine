@@ -59,6 +59,7 @@ wx.login()
   -> POST /api/public/wechat/login
   -> 拿到 openId
   -> POST /api/public/access/check
+  -> 如未申请，用户点击申请后 POST /api/public/access/apply
 ```
 
 注意：
@@ -80,9 +81,6 @@ Content-Type: application/json
 type AccessCheckRequest = {
   openId?: string;
   unionId?: string;
-  nickname?: string;
-  avatarUrl?: string;
-  phone?: string;
 };
 ```
 
@@ -94,6 +92,8 @@ type AccessCheckRequest = {
 type AccessCheckResponse = {
   allowed: boolean;
   permissions: string[];
+  applicationStatus: "not_applied" | "pending" | "approved";
+  applicationSubmittedAt: string | null;
   user: {
     id: string;
     openId: string | null;
@@ -106,6 +106,7 @@ type AccessCheckResponse = {
     source: string;
     lastCheckedAt: string | null;
     lastAllowedAt: string | null;
+    applicationSubmittedAt: string | null;
     createdAt: string;
     updatedAt: string;
   };
@@ -114,11 +115,32 @@ type AccessCheckResponse = {
 
 规则：
 
-- `allowed === true`：允许进入故事页面。
-- `allowed === false`：展示无权限页面，例如“暂未开通访问，请联系管理员”。
-- 如果用户第一次访问，服务端会自动创建一条待审核记录，管理员会在后台开启权限。
+- `applicationStatus === "approved"`：允许进入故事页面。
+- `applicationStatus === "pending"`：展示“申请已提交，等待审核”，不要重复显示申请按钮。
+- `applicationStatus === "not_applied"`：展示申请入口，用户确认后调用申请接口。
+- 如果用户第一次检查权限，服务端会自动创建一条未申请记录。
 
-### 3. 获取故事列表
+### 3. 提交访问申请
+
+```http
+POST /api/public/access/apply
+Content-Type: application/json
+```
+
+请求 body：
+
+```ts
+type AccessApplyRequest = {
+  openId?: string;
+  unionId?: string;
+  nickname?: string;
+  avatarUrl?: string;
+};
+```
+
+响应结构同 `AccessCheckResponse`。提交后如果管理员还未允许，`applicationStatus` 为 `"pending"`。
+
+### 4. 获取故事列表
 
 ```http
 GET /api/public/stories?page=1&pageSize=10
@@ -162,7 +184,7 @@ type StoryListResponse = {
 - 下拉刷新：重置为第一页
 - 上拉加载更多：只有 `hasMore === true` 时请求下一页
 
-### 4. 获取故事详情
+### 5. 获取故事详情
 
 ```http
 GET /api/public/stories/:id
@@ -245,6 +267,14 @@ export function checkAccess(profile: AccessCheckRequest) {
   });
 }
 
+export function applyAccess(profile: AccessApplyRequest) {
+  return request<AccessCheckResponse>({
+    url: "/api/public/access/apply",
+    method: "POST",
+    data: profile
+  });
+}
+
 export function fetchStories(page = 1, pageSize = 10) {
   return request<StoryListResponse>({
     url: `/api/public/stories?page=${page}&pageSize=${pageSize}`
@@ -306,8 +336,9 @@ checkAccess({ openId });
   -> wx.login 获取 code
   -> POST /api/public/wechat/login 换 openId
   -> 调用 POST /api/public/access/check
-  -> allowed=false：跳转或展示 no-access 状态
-  -> allowed=true：请求故事列表第一页
+  -> applicationStatus=not_applied：展示申请访问入口
+  -> applicationStatus=pending：展示等待审核状态
+  -> applicationStatus=approved：请求故事列表第一页
 ```
 
 伪代码：
@@ -319,8 +350,13 @@ async function bootstrap() {
     const openId = await getCurrentOpenId();
     const access = await checkAccess({ openId });
 
-    if (!access.allowed) {
-      setData({ loading: false, noAccess: true });
+    if (access.applicationStatus === "not_applied") {
+      setData({ loading: false, accessState: "not_applied" });
+      return;
+    }
+
+    if (access.applicationStatus === "pending") {
+      setData({ loading: false, accessState: "pending" });
       return;
     }
 
@@ -389,10 +425,17 @@ fetchStoryDetail(id);
 
 ## 无权限页要求
 
-当 `allowed === false` 时展示无权限状态：
+当 `applicationStatus === "not_applied"` 时展示申请入口：
 
 ```text
-暂未开通访问，请联系管理员
+暂未开通访问
+申请访问
+```
+
+当 `applicationStatus === "pending"` 时展示等待审核状态：
+
+```text
+申请已提交，等待审核
 ```
 
 可以展示当前用户标识，方便用户发给管理员：
@@ -408,7 +451,8 @@ fetchStoryDetail(id);
 建议文案：
 
 ```text
-无权限：暂未开通访问，请联系管理员
+未申请：暂未开通访问
+待审核：申请已提交，等待审核
 列表为空：还没有故事
 网络失败：故事加载失败，请稍后再试
 详情 404：这条故事不存在或已经被删除
@@ -443,7 +487,8 @@ https://susu-img-wx.cnhalo.com
 - 首次进入小程序会先检查访问权限。
 - 首次进入小程序会通过 `wx.login` 和 `/api/public/wechat/login` 换取 openId。
 - 小程序内浏览列表、详情、分页、刷新时不会重复检查权限。
-- 未授权用户不会请求故事列表。
+- 未申请用户不会请求故事列表，可以提交访问申请。
+- 待审核用户不会请求故事列表，也不会重复看到申请按钮。
 - 未授权用户会看到清晰的无权限页面。
 - 授权用户能看到故事列表。
 - 列表支持下拉刷新和上拉加载更多。
@@ -460,18 +505,19 @@ https://susu-img-wx.cnhalo.com
 
 实现目标：
 1. 封装统一 request 方法，Base URL 使用 http://susu-time-machine.cnhalo.com。
-2. 封装 loginWechat、checkAccess、fetchStories、fetchStoryDetail 四个 API 方法。
+2. 封装 loginWechat、checkAccess、applyAccess、fetchStories、fetchStoryDetail 五个 API 方法。
 3. 小程序进入时先调用 wx.login 获取 code，再调用 POST /api/public/wechat/login 换 openId。
 4. 拿到 openId 后调用一次 POST /api/public/access/check。
-5. 如果 allowed=false，展示无权限页面或无权限状态，不请求故事列表。
-6. 如果 allowed=true，加载 GET /api/public/stories?page=1&pageSize=10，后续浏览列表、详情、分页、刷新都不要重复调用权限检查接口。
-7. 实现故事列表，展示 coverImage、title、summary、storyDate、tags。
-8. 实现下拉刷新和上拉加载更多。
-9. 点击故事进入详情页，详情页调用 GET /api/public/stories/:id。
-10. 详情页展示 title、storyDate、tags、coverImage、content 和 images。
-11. content 按换行分段渲染，images 按 sortOrder 排序，点击图片使用 wx.previewImage。
-12. coverImage 为空或图片加载失败时使用本地默认图。
-13. 只调用 /api/public/*，不要调用后台管理接口。
+5. 如果 applicationStatus=not_applied，展示申请访问入口，用户点击后调用 POST /api/public/access/apply。
+6. 如果 applicationStatus=pending，展示“申请已提交，等待审核”，不请求故事列表。
+7. 如果 applicationStatus=approved，加载 GET /api/public/stories?page=1&pageSize=10，后续浏览列表、详情、分页、刷新都不要重复调用权限检查接口。
+8. 实现故事列表，展示 coverImage、title、summary、storyDate、tags。
+9. 实现下拉刷新和上拉加载更多。
+10. 点击故事进入详情页，详情页调用 GET /api/public/stories/:id。
+11. 详情页展示 title、storyDate、tags、coverImage、content 和 images。
+12. content 按换行分段渲染，images 按 sortOrder 排序，点击图片使用 wx.previewImage。
+13. coverImage 为空或图片加载失败时使用本地默认图。
+14. 只调用 /api/public/*，不要调用后台管理接口。
 
 注意：
 - 不要硬编码真实 openId。

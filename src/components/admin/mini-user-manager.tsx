@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Pencil, Plus, Save, Trash2, X } from "lucide-react";
+import { Check, Clock, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ type MiniProgramUser = {
   allowed: boolean;
   source: string;
   lastCheckedAt: string | null;
+  applicationSubmittedAt: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -170,7 +171,7 @@ export function MiniUserManager({ users }: { users: MiniProgramUser[] }) {
       <div className="overflow-hidden rounded-lg border border-susu-line bg-white shadow-card">
         <div className="hidden grid-cols-[1fr_130px_130px_150px_210px] gap-4 border-b border-susu-line px-4 py-3 text-sm font-semibold text-susu-muted xl:grid">
           <span>用户</span>
-          <span>状态</span>
+          <span>申请状态</span>
           <span>来源</span>
           <span>最近检查</span>
           <span>操作</span>
@@ -178,6 +179,7 @@ export function MiniUserManager({ users }: { users: MiniProgramUser[] }) {
         <div className="grid">
           {users.map((user) => {
             const editing = editingId === user.id;
+            const applicationStatus = getApplicationStatus(user);
             return (
               <article key={user.id} className="grid gap-4 border-b border-susu-line p-4 last:border-b-0 xl:grid-cols-[1fr_130px_130px_150px_210px]">
                 <div className="min-w-0">
@@ -231,10 +233,10 @@ export function MiniUserManager({ users }: { users: MiniProgramUser[] }) {
                       允许访问
                     </label>
                   ) : (
-                    <span className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-sm font-bold ${user.allowed ? "bg-[#eaf8f1] text-[#4c9f75]" : "bg-[#fff0f0] text-susu-red"}`}>
-                      {user.allowed ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
-                      {user.allowed ? "已允许" : "未允许"}
-                    </span>
+                    <div className="grid gap-2">
+                      <ApplicationStatusBadge status={applicationStatus} />
+                      {user.applicationSubmittedAt ? <span className="text-xs text-susu-muted">申请：{new Date(user.applicationSubmittedAt).toLocaleDateString("zh-CN")}</span> : null}
+                    </div>
                   )}
                 </div>
                 <div className="text-sm text-susu-muted">{user.source === "mini-program" ? "小程序上报" : "后台添加"}</div>
@@ -286,6 +288,39 @@ function userToForm(user: MiniProgramUser): FormState {
     remark: user.remark || "",
     allowed: user.allowed
   };
+}
+
+function getApplicationStatus(user: MiniProgramUser) {
+  if (user.allowed) return "approved" as const;
+  if (user.applicationSubmittedAt) return "pending" as const;
+  return "not_applied" as const;
+}
+
+function ApplicationStatusBadge({ status }: { status: ReturnType<typeof getApplicationStatus> }) {
+  const config = {
+    approved: {
+      label: "已允许",
+      icon: <Check className="h-4 w-4" />,
+      className: "bg-[#eaf8f1] text-[#4c9f75]"
+    },
+    pending: {
+      label: "待审核",
+      icon: <Clock className="h-4 w-4" />,
+      className: "bg-[#fff7e6] text-[#a56a12]"
+    },
+    not_applied: {
+      label: "未申请",
+      icon: <X className="h-4 w-4" />,
+      className: "bg-[#f4f4f5] text-susu-muted"
+    }
+  }[status];
+
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-sm font-bold ${config.className}`}>
+      {config.icon}
+      {config.label}
+    </span>
+  );
 }
 
 function AvatarPreview({

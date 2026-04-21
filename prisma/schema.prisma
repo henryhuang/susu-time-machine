@@ -54,9 +54,11 @@ model MiniProgramUser {
   source        String    @default("manual")
   lastCheckedAt DateTime?
   lastAllowedAt DateTime?
+  applicationSubmittedAt DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   @@index([allowed, updatedAt])
+  @@index([applicationSubmittedAt])
   @@index([nickname])
 }

@@ -36,10 +36,18 @@ const optionalProfileUrl = z
 export const miniProgramAccessCheckSchema = z
   .object({
     openId: optionalProfileText,
+    unionId: optionalProfileText
+  })
+  .refine((value) => value.openId || value.unionId, {
+    message: "请提供 openId 或 unionId"
+  });
+
+export const miniProgramAccessApplySchema = z
+  .object({
+    openId: optionalProfileText,
     unionId: optionalProfileText,
     nickname: optionalProfileText,
-    avatarUrl: optionalProfileUrl,
-    phone: optionalProfileText
+    avatarUrl: optionalProfileUrl
   })
   .refine((value) => value.openId || value.unionId, {
     message: "请提供 openId 或 unionId"
@@ -70,5 +78,6 @@ export const miniProgramUserInputSchema = z
   });
 
 export type MiniProgramAccessCheckInput = z.infer<typeof miniProgramAccessCheckSchema>;
+export type MiniProgramAccessApplyInput = z.infer<typeof miniProgramAccessApplySchema>;
 export type MiniProgramLoginInput = z.infer<typeof miniProgramLoginSchema>;
 export type MiniProgramUserInput = z.infer<typeof miniProgramUserInputSchema>;
