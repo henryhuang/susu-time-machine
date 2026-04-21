@@ -45,6 +45,16 @@ export const miniProgramAccessCheckSchema = z
     message: "请提供 openId 或 unionId"
   });
 
+export const miniProgramLoginSchema = z.object({
+  code: z
+    .string({
+      required_error: "请提供微信登录 code",
+      invalid_type_error: "请提供微信登录 code"
+    })
+    .trim()
+    .min(1, "请提供微信登录 code")
+});
+
 export const miniProgramUserInputSchema = z
   .object({
     openId: optionalProfileText,
@@ -60,4 +70,5 @@ export const miniProgramUserInputSchema = z
   });
 
 export type MiniProgramAccessCheckInput = z.infer<typeof miniProgramAccessCheckSchema>;
+export type MiniProgramLoginInput = z.infer<typeof miniProgramLoginSchema>;
 export type MiniProgramUserInput = z.infer<typeof miniProgramUserInputSchema>;

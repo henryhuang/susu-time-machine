@@ -1,10 +1,10 @@
 # 给小程序 Codex 的接入任务说明
 
-请在微信小程序项目中接入「酥酥时光机」后端 API，实现访问权限检查、故事列表和故事详情。
+请在微信小程序项目中接入「酥酥时光机」后端 API，实现微信登录换 openId、访问权限检查、故事列表和故事详情。
 
 ## 目标
 
-小程序进入时先检查一次当前微信用户是否有访问权限：
+小程序进入时先获取微信登录 code，用后端公开接口换取 openId，然后检查一次当前微信用户是否有访问权限：
 
 - 有权限：进入故事列表 / 时间轴。
 - 无权限：展示无权限页面，不请求故事数据。
@@ -27,7 +27,47 @@ const API_BASE_URL = "https://susu-time-machine.cnhalo.com";
 
 ## 必须接入的接口
 
-### 1. 检查访问权限
+### 1. 微信登录换 openId
+
+```http
+POST /api/public/wechat/login
+Content-Type: application/json
+```
+
+请求 body：
+
+```ts
+type WechatLoginRequest = {
+  code: string;
+};
+```
+
+响应：
+
+```ts
+type WechatLoginResponse = {
+  openId: string;
+  unionId: string | null;
+};
+```
+
+小程序端调用顺序：
+
+```text
+wx.login()
+  -> 拿到 code
+  -> POST /api/public/wechat/login
+  -> 拿到 openId
+  -> POST /api/public/access/check
+```
+
+注意：
+
+- 不要在小程序端调用微信 `jscode2session`。
+- 不要在小程序端保存或暴露 AppSecret。
+- 后端不会把 `session_key` 返回给小程序。
+
+### 2. 检查访问权限
 
 ```http
 POST /api/public/access/check
@@ -78,7 +118,7 @@ type AccessCheckResponse = {
 - `allowed === false`：展示无权限页面，例如“暂未开通访问，请联系管理员”。
 - 如果用户第一次访问，服务端会自动创建一条待审核记录，管理员会在后台开启权限。
 
-### 2. 获取故事列表
+### 3. 获取故事列表
 
 ```http
 GET /api/public/stories?page=1&pageSize=10
@@ -122,7 +162,7 @@ type StoryListResponse = {
 - 下拉刷新：重置为第一页
 - 上拉加载更多：只有 `hasMore === true` 时请求下一页
 
-### 3. 获取故事详情
+### 4. 获取故事详情
 
 ```http
 GET /api/public/stories/:id
@@ -189,6 +229,14 @@ export function request<T>({ url, method = "GET", data }: RequestOptions): Promi
 API 方法示例：
 
 ```ts
+export function loginWechat(code: string) {
+  return request<WechatLoginResponse>({
+    url: "/api/public/wechat/login",
+    method: "POST",
+    data: { code }
+  });
+}
+
 export function checkAccess(profile: AccessCheckRequest) {
   return request<AccessCheckResponse>({
     url: "/api/public/access/check",
@@ -212,22 +260,39 @@ export function fetchStoryDetail(id: string) {
 
 ## 获取 openId
 
-小程序端通常不能直接拿到 openId，需要先调用 `wx.login()` 获取 `code`，再由自己的登录接口换取 openId。
+小程序端先调用 `wx.login()` 获取 `code`，再调用后端接口换取 openId：
 
-如果当前小程序项目已经有登录接口或 openId 获取逻辑，请复用它，然后把 openId 传给：
+```ts
+export function wxLoginCode(): Promise<string> {
+  return new Promise((resolve, reject) => {
+    wx.login({
+      success: (res) => {
+        if (res.code) {
+          resolve(res.code);
+          return;
+        }
+        reject(new Error("wx.login 未返回 code"));
+      },
+      fail: reject
+    });
+  });
+}
+```
+
+组合方法示例：
+
+```ts
+async function getCurrentOpenId() {
+  const code = await wxLoginCode();
+  const result = await loginWechat(code);
+  return result.openId;
+}
+```
+
+拿到 openId 后再传给权限检查：
 
 ```ts
 checkAccess({ openId });
-```
-
-如果当前项目还没有 openId 获取能力，请先保留一个独立方法，例如：
-
-```ts
-async function getCurrentOpenId(): Promise<string> {
-  // TODO: 调用现有登录接口，用 wx.login 的 code 换取 openId。
-  // 不要在前端硬编码真实 openId。
-  throw new Error("请先接入微信登录换取 openId");
-}
 ```
 
 实现页面流程时，不要把故事接口和 openId 获取逻辑写死在页面里，尽量放到 service 层。
@@ -238,7 +303,8 @@ async function getCurrentOpenId(): Promise<string> {
 
 ```text
 小程序进入
-  -> 获取 openId
+  -> wx.login 获取 code
+  -> POST /api/public/wechat/login 换 openId
   -> 调用 POST /api/public/access/check
   -> allowed=false：跳转或展示 no-access 状态
   -> allowed=true：请求故事列表第一页
@@ -368,12 +434,14 @@ https://susu-img-wx.cnhalo.com
 - 不要调用 `/api/auth/*`
 - 不要调用 `/api/upload/*`
 - 不要在小程序里保存后台管理员账号密码
+- 不要在小程序里保存或暴露微信 AppSecret
 - 不要把真实 openId 写死在代码里
 - 不要把图片 URL 再拼接 Base URL
 
 ## 验收清单
 
 - 首次进入小程序会先检查访问权限。
+- 首次进入小程序会通过 `wx.login` 和 `/api/public/wechat/login` 换取 openId。
 - 小程序内浏览列表、详情、分页、刷新时不会重复检查权限。
 - 未授权用户不会请求故事列表。
 - 未授权用户会看到清晰的无权限页面。
@@ -392,20 +460,21 @@ https://susu-img-wx.cnhalo.com
 
 实现目标：
 1. 封装统一 request 方法，Base URL 使用 http://susu-time-machine.cnhalo.com。
-2. 封装 checkAccess、fetchStories、fetchStoryDetail 三个 API 方法。
-3. 小程序进入时先获取 openId，再调用一次 POST /api/public/access/check。
-4. 如果 allowed=false，展示无权限页面或无权限状态，不请求故事列表。
-5. 如果 allowed=true，加载 GET /api/public/stories?page=1&pageSize=10，后续浏览列表、详情、分页、刷新都不要重复调用权限检查接口。
-6. 实现故事列表，展示 coverImage、title、summary、storyDate、tags。
-7. 实现下拉刷新和上拉加载更多。
-8. 点击故事进入详情页，详情页调用 GET /api/public/stories/:id。
-9. 详情页展示 title、storyDate、tags、coverImage、content 和 images。
-10. content 按换行分段渲染，images 按 sortOrder 排序，点击图片使用 wx.previewImage。
-11. coverImage 为空或图片加载失败时使用本地默认图。
-12. 只调用 /api/public/*，不要调用后台管理接口。
+2. 封装 loginWechat、checkAccess、fetchStories、fetchStoryDetail 四个 API 方法。
+3. 小程序进入时先调用 wx.login 获取 code，再调用 POST /api/public/wechat/login 换 openId。
+4. 拿到 openId 后调用一次 POST /api/public/access/check。
+5. 如果 allowed=false，展示无权限页面或无权限状态，不请求故事列表。
+6. 如果 allowed=true，加载 GET /api/public/stories?page=1&pageSize=10，后续浏览列表、详情、分页、刷新都不要重复调用权限检查接口。
+7. 实现故事列表，展示 coverImage、title、summary、storyDate、tags。
+8. 实现下拉刷新和上拉加载更多。
+9. 点击故事进入详情页，详情页调用 GET /api/public/stories/:id。
+10. 详情页展示 title、storyDate、tags、coverImage、content 和 images。
+11. content 按换行分段渲染，images 按 sortOrder 排序，点击图片使用 wx.previewImage。
+12. coverImage 为空或图片加载失败时使用本地默认图。
+13. 只调用 /api/public/*，不要调用后台管理接口。
 
 注意：
-- 如果项目已有 openId 获取逻辑，请复用。
-- 如果还没有 openId 获取逻辑，请先把 getCurrentOpenId 做成独立 TODO，不要硬编码真实 openId。
+- 不要硬编码真实 openId。
+- 不要在小程序端出现 WECHAT_MINI_APP_SECRET 或 AppSecret。
 - 代码风格、目录结构和组件写法要贴合当前小程序项目。
 ```
