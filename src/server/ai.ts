@@ -69,7 +69,7 @@ function buildPrompt(input: GenerateStoryContentInput) {
 function systemPrompt() {
   return [
     "你是一位擅长撰写家庭成长记录的中文写作者。",
-    "请输出简体中文正文，长度控制在 300 到 800 字。",
+    "请输出简体中文正文，长度控制在 120 到 220 字。",
     "文风要温柔、真实、有纪念感，但不要过度煽情，不要夸张。",
     "不要编造用户没有提供、也无法确认的细节。",
     "如果信息不足，就基于标题、摘要、日期、标签和已有正文做自然扩写。",
@@ -77,7 +77,7 @@ function systemPrompt() {
     "如果提供了图片，只把图片中能明确观察到的内容作为辅助，不要猜测无法确认的人物身份、地点、关系或事件。",
     "必须只输出 JSON，不要输出 Markdown、解释、代码块或额外文本。",
     "JSON 可包含字段：content 和 summary。",
-    "content 是 300 到 800 字正文；summary 是 80 字以内摘要。",
+    "content 是 120 到 220 字正文；summary 是 50 字以内摘要。",
     "如果用户已有摘要，不要生成 summary 字段。",
     "如果用户已有正文，不要生成 content 字段。"
   ].join("\n");
