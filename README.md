@@ -157,6 +157,18 @@ susu/stories/2026/04/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.jpg
 上传：
 
 - `POST /api/upload/image`
+- `POST /api/admin/stories/ai-generate`
+
+小程序展示端接入文档：
+
+- `docs/miniprogram-api.md`
+
+AI 正文生成说明：
+
+- 后台“新增故事 / 编辑故事”页支持点击“让 AI 生成”
+- 首阶段根据标题、摘要、日期、标签和已有正文生成
+- 当前接入阿里云百炼 OpenAI 兼容接口，模型默认使用 `qwen3.6-plus`
+- `DASHSCOPE_API_KEY` 只在服务端使用
 
 ## 公共组件与工具函数
 
@@ -185,6 +197,11 @@ APP_URL="http://localhost:3000"
 AUTH_SECRET="replace-with-at-least-32-random-characters"
 ADMIN_USERNAME="admin"
 ADMIN_PASSWORD="change-me-before-deploy"
+DASHSCOPE_API_KEY=""
+DASHSCOPE_BASE_URL="https://dashscope.aliyuncs.com/compatible-mode/v1"
+QWEN_MODEL="qwen3.6-plus"
+AI_REQUEST_TIMEOUT_MS="45000"
+AI_MAX_IMAGE_INPUTS="3"
 
 TENCENT_COS_SECRET_ID=""
 TENCENT_COS_SECRET_KEY=""
