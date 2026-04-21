@@ -150,7 +150,10 @@ export function MiniUserManager({ users }: { users: MiniProgramUser[] }) {
             <Input value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} placeholder="可选" />
           </Field>
           <Field label="头像 URL">
-            <Input value={form.avatarUrl} onChange={(event) => setForm({ ...form, avatarUrl: event.target.value })} placeholder="可选" />
+            <div className="flex items-center gap-3">
+              <Input value={form.avatarUrl} onChange={(event) => setForm({ ...form, avatarUrl: event.target.value })} placeholder="可选" />
+              <AvatarPreview avatarUrl={form.avatarUrl} nickname={form.nickname} />
+            </div>
           </Field>
           <Field label="备注">
             <Input value={form.remark} onChange={(event) => setForm({ ...form, remark: event.target.value })} placeholder="比如：家人 / 朋友" />
@@ -180,25 +183,45 @@ export function MiniUserManager({ users }: { users: MiniProgramUser[] }) {
                 <div className="min-w-0">
                   {editing ? (
                     <div className="grid gap-3 md:grid-cols-2">
-                      <Input value={editForm.openId} onChange={(event) => setEditForm({ ...editForm, openId: event.target.value })} placeholder="OpenID" />
-                      <Input value={editForm.unionId} onChange={(event) => setEditForm({ ...editForm, unionId: event.target.value })} placeholder="UnionID" />
-                      <Input value={editForm.nickname} onChange={(event) => setEditForm({ ...editForm, nickname: event.target.value })} placeholder="昵称" />
-                      <Input value={editForm.phone} onChange={(event) => setEditForm({ ...editForm, phone: event.target.value })} placeholder="手机号" />
-                      <Input value={editForm.avatarUrl} onChange={(event) => setEditForm({ ...editForm, avatarUrl: event.target.value })} placeholder="头像 URL" />
-                      <Input value={editForm.remark} onChange={(event) => setEditForm({ ...editForm, remark: event.target.value })} placeholder="备注" />
+                      <Field label="OpenID">
+                        <Input value={editForm.openId} onChange={(event) => setEditForm({ ...editForm, openId: event.target.value })} placeholder="OpenID" />
+                      </Field>
+                      <Field label="UnionID">
+                        <Input value={editForm.unionId} onChange={(event) => setEditForm({ ...editForm, unionId: event.target.value })} placeholder="UnionID" />
+                      </Field>
+                      <Field label="昵称">
+                        <Input value={editForm.nickname} onChange={(event) => setEditForm({ ...editForm, nickname: event.target.value })} placeholder="昵称" />
+                      </Field>
+                      <Field label="手机号">
+                        <Input value={editForm.phone} onChange={(event) => setEditForm({ ...editForm, phone: event.target.value })} placeholder="手机号" />
+                      </Field>
+                      <Field label="头像 URL">
+                        <div className="flex items-center gap-3">
+                          <Input value={editForm.avatarUrl} onChange={(event) => setEditForm({ ...editForm, avatarUrl: event.target.value })} placeholder="头像 URL" />
+                          <AvatarPreview avatarUrl={editForm.avatarUrl} nickname={editForm.nickname} />
+                        </div>
+                      </Field>
+                      <Field label="备注">
+                        <Input value={editForm.remark} onChange={(event) => setEditForm({ ...editForm, remark: event.target.value })} placeholder="备注" />
+                      </Field>
                     </div>
                   ) : (
-                    <>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-bold">{user.nickname || "未命名用户"}</span>
-                        {user.remark ? <span className="rounded-md bg-peach-50 px-2 py-1 text-xs font-semibold text-peach-600">{user.remark}</span> : null}
+                    <div className="flex gap-3">
+                      <AvatarPreview avatarUrl={user.avatarUrl || ""} nickname={user.nickname || ""} size="lg" />
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-bold">{user.nickname || "未命名用户"}</span>
+                          {user.remark ? <span className="rounded-md bg-peach-50 px-2 py-1 text-xs font-semibold text-peach-600">备注：{user.remark}</span> : null}
+                        </div>
+                        <div className="mt-2 grid gap-1 break-all text-xs leading-5 text-susu-muted">
+                          <span>OpenID：{user.openId || "-"}</span>
+                          <span>UnionID：{user.unionId || "-"}</span>
+                          <span>昵称：{user.nickname || "-"}</span>
+                          <span>手机号：{user.phone || "-"}</span>
+                          <span>头像：{user.avatarUrl || "-"}</span>
+                        </div>
                       </div>
-                      <div className="mt-2 grid gap-1 break-all text-xs leading-5 text-susu-muted">
-                        <span>OpenID：{user.openId || "-"}</span>
-                        <span>UnionID：{user.unionId || "-"}</span>
-                        <span>手机号：{user.phone || "-"}</span>
-                      </div>
-                    </>
+                    </div>
                   )}
                 </div>
                 <div>
@@ -263,4 +286,34 @@ function userToForm(user: MiniProgramUser): FormState {
     remark: user.remark || "",
     allowed: user.allowed
   };
+}
+
+function AvatarPreview({
+  avatarUrl,
+  nickname,
+  size = "md"
+}: {
+  avatarUrl: string;
+  nickname?: string;
+  size?: "md" | "lg";
+}) {
+  const className = size === "lg" ? "h-14 w-14" : "h-11 w-11";
+  const initial = nickname?.trim().slice(0, 1) || "微";
+
+  if (!avatarUrl) {
+    return (
+      <span className={`${className} grid flex-none place-items-center rounded-lg bg-peach-100 text-sm font-bold text-peach-600`}>
+        {initial}
+      </span>
+    );
+  }
+
+  return (
+    <img
+      src={avatarUrl}
+      alt={nickname ? `${nickname}的头像` : "小程序用户头像"}
+      className={`${className} flex-none rounded-lg border border-susu-line bg-peach-50 object-cover`}
+      referrerPolicy="no-referrer"
+    />
+  );
 }

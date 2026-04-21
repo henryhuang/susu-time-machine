@@ -23,14 +23,14 @@ const optionalProfileText = z
   .string()
   .trim()
   .max(240, "内容不要超过 240 个字")
-  .optional()
+  .nullish()
   .transform((value) => value || undefined);
 
 const optionalProfileUrl = z
   .string()
   .trim()
   .max(1000, "链接不要超过 1000 个字")
-  .optional()
+  .nullish()
   .transform((value) => value || undefined);
 
 export const miniProgramAccessCheckSchema = z

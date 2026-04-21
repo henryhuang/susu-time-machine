@@ -29,7 +29,17 @@ function identityWhere(input: { openId?: string; unionId?: string }) {
   ].filter(Boolean) as Prisma.MiniProgramUserWhereInput[];
 }
 
-function profileData(input: MiniProgramAccessCheckInput | MiniProgramUserInput) {
+function accessProfileData(input: MiniProgramAccessCheckInput) {
+  return {
+    ...(input.openId ? { openId: input.openId } : {}),
+    ...(input.unionId ? { unionId: input.unionId } : {}),
+    ...(input.nickname ? { nickname: input.nickname } : {}),
+    ...(input.avatarUrl ? { avatarUrl: input.avatarUrl } : {}),
+    ...(input.phone ? { phone: input.phone } : {})
+  };
+}
+
+function editableProfileData(input: MiniProgramUserInput) {
   return {
     openId: input.openId,
     unionId: input.unionId,
@@ -49,14 +59,14 @@ export async function checkMiniProgramAccess(input: MiniProgramAccessCheckInput)
     ? await prisma.miniProgramUser.update({
         where: { id: existing.id },
         data: {
-          ...profileData(input),
+          ...accessProfileData(input),
           lastCheckedAt: now,
           lastAllowedAt: existing.allowed ? now : existing.lastAllowedAt
         }
       })
     : await prisma.miniProgramUser.create({
         data: {
-          ...profileData(input),
+          ...accessProfileData(input),
           source: "mini-program",
           allowed: false,
           lastCheckedAt: now
@@ -116,7 +126,7 @@ export async function listMiniProgramUsers(options?: {
 export async function createMiniProgramUser(input: MiniProgramUserInput) {
   return prisma.miniProgramUser.create({
     data: {
-      ...profileData(input),
+      ...editableProfileData(input),
       remark: input.remark,
       allowed: input.allowed,
       source: "manual"
@@ -128,7 +138,7 @@ export async function updateMiniProgramUser(id: string, input: MiniProgramUserIn
   return prisma.miniProgramUser.update({
     where: { id },
     data: {
-      ...profileData(input),
+      ...editableProfileData(input),
       remark: input.remark,
       allowed: input.allowed
     }
