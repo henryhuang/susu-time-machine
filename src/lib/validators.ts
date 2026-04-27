@@ -81,3 +81,56 @@ export type MiniProgramAccessCheckInput = z.infer<typeof miniProgramAccessCheckS
 export type MiniProgramAccessApplyInput = z.infer<typeof miniProgramAccessApplySchema>;
 export type MiniProgramLoginInput = z.infer<typeof miniProgramLoginSchema>;
 export type MiniProgramUserInput = z.infer<typeof miniProgramUserInputSchema>;
+
+const optionalAssetRemark = z
+  .string()
+  .trim()
+  .max(1000, "备注不要超过 1000 个字")
+  .nullish()
+  .transform((value) => value || "");
+
+const amountNumber = z.coerce.number().finite("金额格式不正确").default(0);
+
+export const personalAssetItemSchema = z.object({
+  id: z.string().trim().min(1).max(120),
+  platform: z.string().trim().max(120).default(""),
+  customPlatform: z.string().trim().max(120).default(""),
+  amount: amountNumber,
+  remark: optionalAssetRemark
+});
+
+export const personalLoanItemSchema = z.object({
+  id: z.string().trim().min(1).max(120),
+  name: z.string().trim().max(120).default(""),
+  lender: z.string().trim().max(120).default(""),
+  principal: amountNumber,
+  remainingPrincipal: amountNumber,
+  interestRate: z.coerce.number().finite("利率格式不正确").default(0),
+  monthlyPayment: amountNumber,
+  remark: optionalAssetRemark
+});
+
+export const personalCardItemSchema = z.object({
+  id: z.string().trim().min(1).max(120),
+  bankName: z.string().trim().max(120).default(""),
+  totalLimit: amountNumber,
+  remainingLimit: amountNumber,
+  remark: optionalAssetRemark
+});
+
+export const personalAssetSnapshotInputSchema = z.object({
+  id: z.string().trim().min(1).max(120).optional(),
+  recordDate: z.string().trim().min(1, "请选择记录日期"),
+  title: z.string().trim().min(1, "请填写标题").max(120, "标题不要超过 120 个字"),
+  remark: optionalAssetRemark,
+  assets: z.array(personalAssetItemSchema).default([]),
+  loans: z.array(personalLoanItemSchema).default([]),
+  cards: z.array(personalCardItemSchema).default([])
+});
+
+export const personalAssetSnapshotImportSchema = z.object({
+  snapshots: z.array(personalAssetSnapshotInputSchema).default([])
+});
+
+export type PersonalAssetSnapshotInput = z.infer<typeof personalAssetSnapshotInputSchema>;
+export type PersonalAssetSnapshotImportInput = z.infer<typeof personalAssetSnapshotImportSchema>;

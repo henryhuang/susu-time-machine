@@ -163,6 +163,29 @@ susu/stories/2026/04/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.jpg
 
 - `docs/miniprogram-api.md`
 
+个人资产详情小程序接口：
+
+- `POST /api/personal-asset/auth/login`：微信 `code` 换 `openid`、白名单状态和资产接口 token
+- `GET /api/personal-asset/auth/state`：读取当前 token 对应访问状态
+- `GET /api/personal-asset/snapshots`：快照列表
+- `GET /api/personal-asset/snapshots/latest`：最近一条快照
+- `GET /api/personal-asset/snapshots/:id`：快照详情
+- `POST /api/personal-asset/snapshots`：新增快照
+- `PUT /api/personal-asset/snapshots/:id`：更新快照
+- `DELETE /api/personal-asset/snapshots/:id`：删除快照
+- `GET /api/personal-asset/data/export`：导出全部快照
+- `POST /api/personal-asset/data/import`：覆盖导入
+- `POST /api/personal-asset/data/import/append`：追加导入
+- `DELETE /api/personal-asset/data/all`：清空数据
+
+资产接口需要在请求头携带登录接口返回的 token：
+
+```http
+Authorization: Bearer <token>
+```
+
+白名单用户读取和写入 `real` 数据；非白名单用户只读取和写入隔离的 `demo` 数据，不能访问真实资产快照。
+
 AI 正文生成说明：
 
 - 后台“新增故事 / 编辑故事”页支持点击“让 AI 生成”
@@ -205,6 +228,10 @@ DASHSCOPE_BASE_URL="https://dashscope.aliyuncs.com/compatible-mode/v1"
 QWEN_MODEL="qwen3.6-plus"
 AI_REQUEST_TIMEOUT_MS="45000"
 AI_MAX_IMAGE_INPUTS="3"
+
+WECHAT_PERSONAL_ASSET_APPID=""
+WECHAT_PERSONAL_ASSET_SECRET=""
+PERSONAL_ASSET_AUTHORIZED_OPENIDS=""
 
 TENCENT_COS_SECRET_ID=""
 TENCENT_COS_SECRET_KEY=""

@@ -16,16 +16,16 @@ model Admin {
 }
 
 model Story {
-  id          String       @id @default(cuid())
-  title       String
-  summary     String
-  content     String
-  coverImage  String?
-  storyDate   DateTime
-  tags        String       @default("[]")
-  images      StoryImage[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id         String       @id @default(cuid())
+  title      String
+  summary    String
+  content    String
+  coverImage String?
+  storyDate  DateTime
+  tags       String       @default("[]")
+  images     StoryImage[]
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
 
   @@index([storyDate])
   @@index([title])
@@ -43,22 +43,41 @@ model StoryImage {
 }
 
 model MiniProgramUser {
-  id            String    @id @default(cuid())
-  openId        String?   @unique
-  unionId       String?   @unique
-  nickname      String?
-  avatarUrl     String?
-  phone         String?
-  remark        String?
-  allowed       Boolean   @default(false)
-  source        String    @default("manual")
-  lastCheckedAt DateTime?
-  lastAllowedAt DateTime?
+  id                     String    @id @default(cuid())
+  openId                 String?   @unique
+  unionId                String?   @unique
+  nickname               String?
+  avatarUrl              String?
+  phone                  String?
+  remark                 String?
+  allowed                Boolean   @default(false)
+  source                 String    @default("manual")
+  lastCheckedAt          DateTime?
+  lastAllowedAt          DateTime?
   applicationSubmittedAt DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
 
   @@index([allowed, updatedAt])
   @@index([applicationSubmittedAt])
   @@index([nickname])
+}
+
+model PersonalAssetSnapshot {
+  dbId        String   @id @default(cuid())
+  id          String
+  ownerOpenId String
+  dataScope   String   @default("real")
+  recordDate  DateTime
+  title       String
+  remark      String   @default("")
+  assets      Json     @default("[]")
+  loans       Json     @default("[]")
+  cards       Json     @default("[]")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([ownerOpenId, dataScope, id])
+  @@index([ownerOpenId, dataScope, recordDate])
+  @@index([ownerOpenId, dataScope, updatedAt])
 }

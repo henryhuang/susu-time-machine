@@ -21,11 +21,21 @@ function getWechatMiniProgramConfig() {
   return { appId, appSecret };
 }
 
-export async function loginWechatMiniProgram(input: MiniProgramLoginInput) {
-  const { appId, appSecret } = getWechatMiniProgramConfig();
+function getWechatPersonalAssetConfig() {
+  const appId = process.env.WECHAT_PERSONAL_ASSET_APPID;
+  const appSecret = process.env.WECHAT_PERSONAL_ASSET_SECRET;
+
+  if (!appId || !appSecret) {
+    throw new Error("请先配置 WECHAT_PERSONAL_ASSET_APPID 和 WECHAT_PERSONAL_ASSET_SECRET");
+  }
+
+  return { appId, appSecret };
+}
+
+async function loginWechatWithConfig(input: MiniProgramLoginInput, config: { appId: string; appSecret: string }) {
   const params = new URLSearchParams({
-    appid: appId,
-    secret: appSecret,
+    appid: config.appId,
+    secret: config.appSecret,
     js_code: input.code,
     grant_type: "authorization_code"
   });
@@ -49,4 +59,12 @@ export async function loginWechatMiniProgram(input: MiniProgramLoginInput) {
     openId: data.openid,
     unionId: data.unionid ?? null
   };
+}
+
+export async function loginWechatMiniProgram(input: MiniProgramLoginInput) {
+  return loginWechatWithConfig(input, getWechatMiniProgramConfig());
+}
+
+export async function loginWechatPersonalAsset(input: MiniProgramLoginInput) {
+  return loginWechatWithConfig(input, getWechatPersonalAssetConfig());
 }
