@@ -15,6 +15,6 @@ export async function POST(request: NextRequest) {
     const snapshots = await importPersonalAssetData(owner, parsed.data);
     return ok({ snapshots, authorized: owner.authorized });
   } catch (error) {
-    return handlePersonalAssetError(error, "导入失败");
+    return handlePersonalAssetError(error, "导入失败", request);
   }
 }

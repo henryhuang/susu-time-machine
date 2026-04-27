@@ -28,6 +28,6 @@ export async function POST(request: NextRequest) {
       token
     });
   } catch (error) {
-    return handlePersonalAssetError(error, "微信登录失败");
+    return handlePersonalAssetError(error, "微信登录失败", request);
   }
 }

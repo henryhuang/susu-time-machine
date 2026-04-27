@@ -17,7 +17,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
     return ok({ snapshot, authorized: owner.authorized });
   } catch (error) {
-    return handlePersonalAssetError(error);
+    return handlePersonalAssetError(error, "请求处理失败", request);
   }
 }
 
@@ -34,7 +34,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const snapshot = await updatePersonalAssetSnapshot(owner, id, parsed.data);
     return ok({ snapshot, authorized: owner.authorized });
   } catch (error) {
-    return handlePersonalAssetError(error, "快照保存失败");
+    return handlePersonalAssetError(error, "快照保存失败", request);
   }
 }
 
@@ -45,6 +45,6 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     await deletePersonalAssetSnapshot(owner, id);
     return ok({ ok: true, authorized: owner.authorized });
   } catch (error) {
-    return handlePersonalAssetError(error, "快照删除失败");
+    return handlePersonalAssetError(error, "快照删除失败", request);
   }
 }

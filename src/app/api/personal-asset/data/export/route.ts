@@ -8,6 +8,6 @@ export async function GET(request: NextRequest) {
     const data = await exportPersonalAssetData(owner);
     return ok({ ...data, authorized: owner.authorized });
   } catch (error) {
-    return handlePersonalAssetError(error);
+    return handlePersonalAssetError(error, "请求处理失败", request);
   }
 }

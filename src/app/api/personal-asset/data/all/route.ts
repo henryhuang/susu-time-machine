@@ -8,6 +8,6 @@ export async function DELETE(request: NextRequest) {
     await clearPersonalAssetData(owner);
     return ok({ ok: true, authorized: owner.authorized });
   } catch (error) {
-    return handlePersonalAssetError(error, "清空数据失败");
+    return handlePersonalAssetError(error, "清空数据失败", request);
   }
 }

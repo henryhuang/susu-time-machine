@@ -15,6 +15,6 @@ export async function POST(request: NextRequest) {
     const snapshots = await appendPersonalAssetData(owner, parsed.data);
     return ok({ snapshots, authorized: owner.authorized });
   } catch (error) {
-    return handlePersonalAssetError(error, "追加导入失败");
+    return handlePersonalAssetError(error, "追加导入失败", request);
   }
 }

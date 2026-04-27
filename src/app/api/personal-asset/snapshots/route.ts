@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const snapshots = await listPersonalAssetSnapshots(owner);
     return ok({ snapshots, authorized: owner.authorized });
   } catch (error) {
-    return handlePersonalAssetError(error);
+    return handlePersonalAssetError(error, "请求处理失败", request);
   }
 }
 
@@ -25,6 +25,6 @@ export async function POST(request: NextRequest) {
     const snapshot = await createPersonalAssetSnapshot(owner, parsed.data);
     return ok({ snapshot, authorized: owner.authorized }, { status: 201 });
   } catch (error) {
-    return handlePersonalAssetError(error, "快照保存失败");
+    return handlePersonalAssetError(error, "快照保存失败", request);
   }
 }

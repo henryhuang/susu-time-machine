@@ -10,6 +10,25 @@ export function fail(message: string, status = 400) {
   return NextResponse.json({ success: false, message }, { status });
 }
 
+function logPersonalAssetError(error: unknown, request?: NextRequest) {
+  if (error instanceof Response || error instanceof ZodError) return;
+
+  const url = request ? new URL(request.url) : null;
+  const message = error instanceof Error ? error.message : String(error);
+  const stack = error instanceof Error ? error.stack : undefined;
+
+  console.error(
+    JSON.stringify({
+      level: "error",
+      scope: "personal-asset-api",
+      method: request?.method,
+      path: url?.pathname,
+      message,
+      stack
+    })
+  );
+}
+
 export async function readJson(request: NextRequest) {
   return request.json().catch(() => null);
 }
@@ -23,7 +42,13 @@ export async function getPersonalAssetOwner(request: NextRequest) {
   };
 }
 
-export function handlePersonalAssetError(error: unknown, fallbackMessage = "请求处理失败") {
+export function handlePersonalAssetError(
+  error: unknown,
+  fallbackMessage = "请求处理失败",
+  request?: NextRequest
+) {
+  logPersonalAssetError(error, request);
+
   if (error instanceof Response) {
     return fail(error.statusText || "Unauthorized", error.status);
   }
