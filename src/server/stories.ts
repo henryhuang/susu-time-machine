@@ -8,6 +8,7 @@ export function serializeStory<T extends { tags: string; storyDate: Date; create
   story: T & {
     id: string;
     title: string;
+    slug: string | null;
     summary: string;
     content: string;
     coverImage: string | null;
@@ -17,6 +18,7 @@ export function serializeStory<T extends { tags: string; storyDate: Date; create
   return {
     id: story.id,
     title: story.title,
+    slug: story.slug,
     summary: story.summary,
     content: story.content,
     coverImage: story.coverImage,
@@ -71,9 +73,11 @@ export async function listStories(options?: {
   };
 }
 
-export async function getStory(id: string) {
-  const story = await prisma.story.findUnique({
-    where: { id },
+export async function getStory(idOrSlug: string) {
+  const story = await prisma.story.findFirst({
+    where: {
+      OR: [{ id: idOrSlug }, { slug: idOrSlug }]
+    },
     include: { images: { orderBy: { sortOrder: "asc" } } }
   });
 
@@ -84,6 +88,7 @@ export async function createStory(input: StoryInput) {
   return prisma.story.create({
     data: {
       title: input.title,
+      slug: input.slug || null,
       summary: input.summary,
       content: input.content,
       storyDate: new Date(input.storyDate),
@@ -107,6 +112,7 @@ export async function updateStory(id: string, input: StoryInput) {
       where: { id },
       data: {
         title: input.title,
+        slug: input.slug || null,
         summary: input.summary,
         content: input.content,
         storyDate: new Date(input.storyDate),

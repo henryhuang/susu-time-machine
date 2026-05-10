@@ -4,6 +4,7 @@ import { Images, Rows3, Users } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { formatDate } from "@/lib/dates";
 import { getImageUrl } from "@/lib/images";
+import { storyHref } from "@/lib/links";
 import { prisma } from "@/lib/prisma";
 import { listStories } from "@/server/stories";
 import { ProtectedAdmin } from "@/components/admin/protected-admin";

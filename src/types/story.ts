@@ -8,6 +8,7 @@ export type StoryImageDTO = {
 export type StoryDTO = {
   id: string;
   title: string;
+  slug: string | null;
   summary: string;
   content: string;
   coverImage: string | null;

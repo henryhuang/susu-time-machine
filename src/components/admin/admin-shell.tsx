@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LayoutDashboard, LogOut, Plus, Settings, Upload, Rows3, Users } from "lucide-react";
+import { ExternalLink, LayoutDashboard, LogOut, Plus, Settings, Upload, Rows3, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function AdminShell({ children, username }: { children: React.ReactNode; username: string }) {
@@ -28,6 +28,10 @@ export function AdminShell({ children, username }: { children: React.ReactNode; 
             酥酥时光机 / <strong className="text-susu-text">控制台</strong>
           </div>
           <div className="flex items-center gap-3">
+            <Link href="/" className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-susu-muted transition hover:bg-peach-50 hover:text-peach-600">
+              <ExternalLink className="h-4 w-4" />
+              回到首页
+            </Link>
             <span className="font-semibold">{username}</span>
             <form action="/api/auth/logout" method="post">
               <Button variant="ghost" size="sm" className="text-susu-muted hover:text-peach-600">

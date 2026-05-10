@@ -2,6 +2,12 @@ import { z } from "zod";
 
 export const storyInputSchema = z.object({
   title: z.string().min(1, "请填写标题").max(80, "标题不要超过 80 个字"),
+  slug: z
+    .string()
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "slug 只能包含小写字母、数字和连字符，例如 monthly-202604")
+    .max(120, "slug 不要超过 120 个字符")
+    .or(z.literal(""))
+    .optional(),
   summary: z.string().min(1, "请填写摘要").max(240, "摘要不要超过 240 个字"),
   content: z.string().min(1, "请填写正文"),
   storyDate: z.string().min(1, "请选择故事日期"),

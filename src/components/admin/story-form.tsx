@@ -17,6 +17,7 @@ export function StoryForm({ story }: { story?: StoryDTO }) {
     [story]
   );
   const [title, setTitle] = useState(story?.title || "");
+  const [slug, setSlug] = useState(story?.slug || "");
   const [summary, setSummary] = useState(story?.summary || "");
   const [content, setContent] = useState(story?.content || "");
   const [storyDate, setStoryDate] = useState(story ? inputDate(story.storyDate) : inputDate(new Date()));
@@ -41,6 +42,7 @@ export function StoryForm({ story }: { story?: StoryDTO }) {
     setError("");
     const payload = {
       title,
+      slug: slug.trim() || undefined,
       summary,
       content,
       storyDate,
@@ -137,6 +139,15 @@ export function StoryForm({ story }: { story?: StoryDTO }) {
         </div>
         <aside className="grid content-start gap-5">
           <section className="grid gap-4 rounded-lg border border-susu-line bg-white p-4 shadow-card">
+            <Field label="自定义路径" hint="可选。填写后前台地址变为 /stories/你的路径，留空则使用默认 ID。仅支持小写字母、数字和连字符。">
+              <Input
+                value={slug}
+                onChange={(event) => setSlug(event.target.value)}
+                placeholder="例如：monthly-202604"
+                maxLength={120}
+                pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              />
+            </Field>
             <Field label="故事日期">
               <Input type="date" value={storyDate} onChange={(event) => setStoryDate(event.target.value)} required />
             </Field>

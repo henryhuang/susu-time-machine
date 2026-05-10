@@ -6,6 +6,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { Tag } from "@/components/ui/tag";
 import { formatDate } from "@/lib/dates";
 import { getImageUrl } from "@/lib/images";
+import { storyHref } from "@/lib/links";
 import { listStories } from "@/server/stories";
 
 export const dynamic = "force-dynamic";
@@ -68,6 +69,7 @@ export default async function AdminStoriesPage({
                 </div>
                 <div className="min-w-0">
                   <div className="font-bold">{story.title}</div>
+                  {story.slug ? <div className="mt-0.5 text-xs text-peach-600">/{story.slug}</div> : null}
                   <p className="mt-1 line-clamp-2 text-sm leading-6 text-susu-muted">{story.summary}</p>
                   <p className="mt-2 text-xs text-susu-muted">
                     创建：{formatDate(story.createdAt)} · 更新：{formatDate(story.updatedAt)}
@@ -80,7 +82,7 @@ export default async function AdminStoriesPage({
                   ))}
                 </div>
                 <div className="flex flex-wrap content-start gap-2">
-                  <ButtonLink href={`/stories/${story.id}`} size="sm" variant="secondary">
+                  <ButtonLink href={storyHref(story)} size="sm" variant="secondary">
                     查看
                   </ButtonLink>
                   <ButtonLink href={`/admin/stories/${story.id}/edit`} size="sm" variant="ghost">

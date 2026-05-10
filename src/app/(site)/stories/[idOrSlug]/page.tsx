@@ -9,9 +9,9 @@ import { getStory } from "@/server/stories";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  const { id } = await params;
-  const story = await getStory(id);
+export async function generateMetadata({ params }: { params: Promise<{ idOrSlug: string }> }): Promise<Metadata> {
+  const { idOrSlug } = await params;
+  const story = await getStory(idOrSlug);
   if (!story) return {};
   return {
     title: story.title,
@@ -24,9 +24,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   };
 }
 
-export default async function StoryDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const story = await getStory(id);
+export default async function StoryDetailPage({ params }: { params: Promise<{ idOrSlug: string }> }) {
+  const { idOrSlug } = await params;
+  const story = await getStory(idOrSlug);
   if (!story) notFound();
 
   const paragraphs = story.content.split(/\n+/).filter(Boolean);

@@ -5,9 +5,9 @@ import { getStory } from "@/server/stories";
 
 export const dynamic = "force-dynamic";
 
-export default async function EditStoryPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const story = await getStory(id);
+export default async function EditStoryPage({ params }: { params: Promise<{ idOrSlug: string }> }) {
+  const { idOrSlug } = await params;
+  const story = await getStory(idOrSlug);
   if (!story) notFound();
 
   return (
