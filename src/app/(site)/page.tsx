@@ -3,11 +3,18 @@ import { Baby, BookOpen, CalendarHeart } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { StoryCard } from "@/components/site/story-card";
 import { listStories } from "@/server/stories";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
+const defaultHeroImage = "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&w=1200&q=80";
+
 export default async function HomePage() {
-  const stories = await listStories({ pageSize: 3 });
+  const [stories, heroConfig] = await Promise.all([
+    listStories({ pageSize: 3 }),
+    prisma.siteConfig.findUnique({ where: { key: "home_hero_image" } }).catch(() => null)
+  ]);
+  const heroImage = heroConfig?.value || defaultHeroImage;
 
   return (
     <main>
@@ -35,7 +42,7 @@ export default async function HomePage() {
         <div className="relative">
           <div className="relative aspect-[4/5] overflow-hidden rounded-lg border border-susu-line bg-white shadow-card">
             <Image
-              src="https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&w=1200&q=80"
+              src={heroImage}
               alt="亲子成长照片"
               fill
               priority

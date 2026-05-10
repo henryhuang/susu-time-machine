@@ -10,13 +10,17 @@ import { ProtectedAdmin } from "@/components/admin/protected-admin";
 
 export const dynamic = "force-dynamic";
 
+const defaultHeroImage = "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&w=640&q=80";
+
 export default async function AdminDashboardPage() {
-  const [totalStories, totalImages, allowedMiniUsers, recent] = await Promise.all([
+  const [totalStories, totalImages, allowedMiniUsers, recent, heroConfig] = await Promise.all([
     prisma.story.count(),
     prisma.storyImage.count(),
     prisma.miniProgramUser.count({ where: { allowed: true } }),
-    listStories({ pageSize: 3 })
+    listStories({ pageSize: 3 }),
+    prisma.siteConfig.findUnique({ where: { key: "home_hero_image" } }).catch(() => null)
   ]);
+  const heroImage = heroConfig?.value || defaultHeroImage;
 
   return (
     <ProtectedAdmin>
@@ -34,7 +38,7 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
         <div className="relative hidden overflow-hidden rounded-lg lg:block">
-          <Image src="https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&w=640&q=80" alt="亲子成长照片" fill sizes="260px" className="object-cover" />
+          <Image src={heroImage} alt="亲子成长照片" fill sizes="260px" className="object-cover" />
         </div>
       </section>
 

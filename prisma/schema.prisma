@@ -63,6 +63,13 @@ model MiniProgramUser {
   @@index([nickname])
 }
 
+model SiteConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
 model PersonalAssetSnapshot {
   dbId        String   @id @default(cuid())
   id          String
