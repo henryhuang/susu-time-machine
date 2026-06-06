@@ -25,7 +25,7 @@
 - Colors and tokens: contrast is sufficient across hero text, actions, body copy, and navigation states.
 - Image quality: real source images are sharp, correctly cropped, and use no placeholder or code-drawn substitutes.
 - Copy and content: all original routes, labels, story content, tags, and administrative entry points remain intact.
-- Interactions: desktop links, mobile navigation, timeline navigation, story links, pagination controls, and photo preview are functional.
+- Interactions: desktop links, mobile navigation, timeline navigation, story links, pagination controls, photo preview, and the WeChat share fallback flow are functional.
 
 **Patches Made Since Previous Pass**
 

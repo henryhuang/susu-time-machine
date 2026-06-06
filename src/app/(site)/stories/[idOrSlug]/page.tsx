@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ImagePreview } from "@/components/site/image-preview";
-import { StoryShareCard } from "@/components/site/story-share-card";
 import { Tag } from "@/components/ui/tag";
+import { WechatShareButton } from "@/components/site/wechat-share-button";
 import { formatDate } from "@/lib/dates";
 import { getImageUrl } from "@/lib/images";
 import { getStory } from "@/server/stories";
@@ -44,7 +44,7 @@ export default async function StoryDetailPage({ params }: { params: Promise<{ id
               <Tag key={tag}>{tag}</Tag>
             ))}
           </div>
-          <StoryShareCard idOrSlug={story.slug || story.id} title={story.title} />
+          <WechatShareButton title={story.title} summary={story.summary} />
         </header>
         <div className="relative mx-auto aspect-[16/9] max-h-[760px] max-w-[1440px] overflow-hidden bg-[#ebe7df]">
           <Image src={getImageUrl(story.coverImage)} alt={story.title} fill priority sizes="100vw" className="object-cover" />
