@@ -1,9 +1,13 @@
 import Image from "next/image";
-import { Baby, BookOpen, CalendarHeart } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
-import { StoryCard } from "@/components/site/story-card";
+import { formatShortDate, StoryCard } from "@/components/site/story-card";
 import { listStories } from "@/server/stories";
 import { prisma } from "@/lib/prisma";
+import { formatDate } from "@/lib/dates";
+import { getImageUrl } from "@/lib/images";
+import { storyHref } from "@/lib/links";
 
 export const dynamic = "force-dynamic";
 
@@ -15,81 +19,76 @@ export default async function HomePage() {
     prisma.siteConfig.findUnique({ where: { key: "home_hero_image" } }).catch(() => null)
   ]);
   const heroImage = heroConfig?.value || defaultHeroImage;
+  const [featuredStory, ...otherStories] = stories.items;
 
   return (
-    <main>
-      <section className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-6xl items-center gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[1.05fr_0.95fr]">
-        <div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-peach-600 shadow-soft">
-            <CalendarHeart className="h-4 w-4" />
-            成长故事慢慢收藏
-          </div>
-          <h1 className="mt-6 max-w-2xl text-4xl font-extrabold leading-tight sm:text-5xl">
+    <main className="bg-white">
+      <section className="relative flex min-h-[680px] items-end overflow-hidden bg-[#25221d] sm:min-h-[760px] lg:min-h-[560px]">
+        <Image
+          src={heroImage}
+          alt="酥酥的成长照片"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/25 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10" />
+        <div className="relative mx-auto w-full max-w-[1440px] px-5 pb-14 text-white sm:px-8 sm:pb-20 lg:px-14 lg:pb-24">
+          <h1 className="display-serif text-balance max-w-3xl text-4xl font-semibold leading-[1.35] tracking-[0.03em] sm:text-5xl lg:text-6xl">
             把酥酥的每一个小小瞬间，放进一台温柔的时光机。
           </h1>
-          <p className="mt-5 max-w-xl text-base leading-8 text-susu-muted">
+          <p className="mt-5 max-w-xl text-sm leading-7 text-white/72 sm:text-base">
             第一次认真搭城堡，第一次在草地上追泡泡，普通日常里闪亮的表情，都在这里按日期好好保存。
           </p>
-          <div className="mt-7 flex flex-wrap gap-3">
-            <ButtonLink href="/stories" variant="primary" size="lg">
+          <div className="mt-8 flex flex-wrap gap-4">
+            <ButtonLink href="/stories" variant="primary" size="lg" className="min-w-44">
               打开成长时间轴
             </ButtonLink>
-            <ButtonLink href="/admin/stories/new" variant="secondary" size="lg">
+            <ButtonLink href="/admin/stories/new" variant="outlineLight" size="lg" className="min-w-40">
               记录新故事
             </ButtonLink>
           </div>
         </div>
-        <div className="relative">
-          <div className="relative aspect-[4/5] overflow-hidden rounded-lg border border-susu-line bg-white shadow-card">
-            <Image
-              src={heroImage}
-              alt="亲子成长照片"
-              fill
-              priority
-              sizes="(max-width: 1024px) 100vw, 520px"
-              className="object-cover"
-            />
-          </div>
-          <div className="absolute -bottom-5 left-5 right-5 rounded-lg border border-susu-line bg-white p-4 shadow-popover">
-            <div className="flex items-center gap-3">
-              <span className="grid h-11 w-11 place-items-center rounded-lg bg-peach-100 text-peach-600">
-                <Baby className="h-5 w-5" />
-              </span>
-              <div>
-                <div className="font-bold">今天也有新的可爱</div>
-                <div className="text-sm text-susu-muted">照片、日期和一句小故事，都会变成以后很珍贵的回看。</div>
-              </div>
-            </div>
-          </div>
-        </div>
       </section>
 
-      <section className="bg-white/60">
-        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
-          <div className="mb-7 flex items-end justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 text-sm font-semibold text-peach-600">
-                <BookOpen className="h-4 w-4" />
-                最近故事
-              </div>
-              <h2 className="mt-2 text-2xl font-bold">刚刚装进时光机的小片段</h2>
-            </div>
-            <ButtonLink href="/stories" variant="ghost">
-              查看全部
-            </ButtonLink>
-          </div>
-          {stories.items.length > 0 ? (
-            <div className="grid gap-4">
-              {stories.items.map((story) => (
-                <StoryCard key={story.id} story={story} />
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-lg border border-dashed border-susu-line bg-white p-10 text-center text-susu-muted">
-              还没有故事。先去后台记录一条今天的成长瞬间吧。
-            </div>
-          )}
+      <section className="mx-auto max-w-[1440px] px-5 py-14 sm:px-8 sm:py-20 lg:px-14">
+        <div className="mb-10 flex items-end justify-between border-b border-susu-line pb-5">
+          <h2 className="display-serif text-2xl font-semibold tracking-[0.08em] sm:text-3xl">最近故事</h2>
+          <Link href="/stories" className="hidden items-center gap-2 text-sm font-semibold transition hover:text-peach-600 sm:flex">
+            查看全部 <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
+        {featuredStory ? (
+          <div className="grid gap-10 lg:grid-cols-[0.82fr_1.18fr] lg:gap-12">
+            <div className="flex flex-col justify-center lg:pr-8">
+              <div className="flex items-start gap-4">
+                <div className="display-serif text-5xl leading-none text-peach-500 sm:text-6xl">{formatShortDate(featuredStory.storyDate)}</div>
+                <div className="pt-1 text-xs leading-5 text-susu-muted">{formatDate(featuredStory.storyDate)}</div>
+              </div>
+              <Link href={storyHref(featuredStory)} className="display-serif mt-7 text-3xl font-semibold leading-tight transition hover:text-peach-600 sm:text-4xl">
+                {featuredStory.title}
+              </Link>
+              <p className="mt-4 max-w-md text-sm leading-7 text-susu-muted">{featuredStory.summary}</p>
+              <Link href={storyHref(featuredStory)} className="mt-8 inline-flex text-peach-500 transition hover:translate-x-1" aria-label={`阅读${featuredStory.title}`}>
+                <ArrowRight className="h-7 w-7" />
+              </Link>
+            </div>
+            <div className="relative aspect-[16/10] overflow-hidden bg-[#ebe7df]">
+              <Image src={getImageUrl(featuredStory.coverImage)} alt={featuredStory.title} fill sizes="(max-width: 1024px) 100vw, 760px" className="object-cover" />
+            </div>
+          </div>
+        ) : (
+          <div className="border-y border-susu-line py-16 text-center text-susu-muted">还没有故事。先去后台记录一条今天的成长瞬间吧。</div>
+        )}
+        {otherStories.length > 0 ? (
+          <div className="mt-12 grid gap-8 border-t border-susu-line pt-10 md:grid-cols-2">
+            {otherStories.map((story) => <StoryCard key={story.id} story={story} compact />)}
+          </div>
+        ) : null}
+        <Link href="/stories" className="mt-10 inline-flex items-center gap-2 text-sm font-semibold sm:hidden">
+          查看全部 <ArrowRight className="h-4 w-4" />
+        </Link>
       </section>
     </main>
   );

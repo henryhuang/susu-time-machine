@@ -9,13 +9,13 @@ export function ImagePreview({ images }: { images: { imageUrl: string; sortOrder
 
   return (
     <>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-5 sm:grid-cols-2">
         {images.map((image) => (
           <button
             key={`${image.imageUrl}-${image.sortOrder}`}
             type="button"
             onClick={() => setActive(image.imageUrl)}
-            className="relative aspect-[4/3] overflow-hidden rounded-lg border border-susu-line bg-peach-50"
+            className="relative aspect-[4/3] overflow-hidden bg-[#ebe7df]"
           >
             <Image src={getImageUrl(image.imageUrl)} alt="故事配图" fill sizes="(max-width: 640px) 100vw, 50vw" className="object-cover" />
           </button>
