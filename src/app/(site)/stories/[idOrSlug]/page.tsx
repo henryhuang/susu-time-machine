@@ -6,6 +6,8 @@ import { Tag } from "@/components/ui/tag";
 import { WechatShareButton } from "@/components/site/wechat-share-button";
 import { formatDate } from "@/lib/dates";
 import { getImageUrl } from "@/lib/images";
+import { storyHref } from "@/lib/links";
+import { absoluteUrl, getRequestSiteUrl } from "@/lib/site";
 import { getStory } from "@/server/stories";
 
 export const dynamic = "force-dynamic";
@@ -14,13 +16,46 @@ export async function generateMetadata({ params }: { params: Promise<{ idOrSlug:
   const { idOrSlug } = await params;
   const story = await getStory(idOrSlug);
   if (!story) return {};
+
+  const requestSiteUrl = await getRequestSiteUrl();
+  const canonicalPath = storyHref(story);
+  const canonicalUrl = absoluteUrl(canonicalPath, requestSiteUrl);
+  const coverImage = absoluteUrl(getImageUrl(story.coverImage), requestSiteUrl);
+
   return {
     title: story.title,
     description: story.summary,
+    authors: [{ name: "酥酥时光机", url: absoluteUrl("/", requestSiteUrl) }],
+    category: "成长故事",
+    keywords: ["酥酥时光机", "成长故事", ...story.tags],
+    alternates: {
+      canonical: canonicalUrl
+    },
     openGraph: {
       title: story.title,
       description: story.summary,
-      images: story.coverImage ? [story.coverImage] : []
+      url: canonicalUrl,
+      siteName: "酥酥时光机",
+      locale: "zh_CN",
+      type: "article",
+      publishedTime: story.createdAt,
+      modifiedTime: story.updatedAt,
+      tags: story.tags,
+      images: [
+        {
+          url: coverImage,
+          alt: `${story.title} - 酥酥时光机`
+        }
+      ]
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: story.title,
+      description: story.summary,
+      images: [coverImage]
+    },
+    other: {
+      "og:image:secure_url": coverImage
     }
   };
 }
