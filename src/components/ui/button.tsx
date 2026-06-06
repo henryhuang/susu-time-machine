@@ -3,8 +3,9 @@ import { ButtonHTMLAttributes, AnchorHTMLAttributes } from "react";
 
 const variants = {
   primary: "bg-peach-500 text-white hover:bg-peach-600 border-peach-500",
-  secondary: "bg-white text-susu-text hover:bg-peach-50 border-susu-line",
-  ghost: "bg-transparent text-peach-600 hover:bg-peach-50 border-transparent",
+  secondary: "bg-white text-susu-text hover:bg-susu-text hover:text-white border-susu-line",
+  ghost: "bg-transparent text-susu-text hover:text-peach-600 border-transparent",
+  outlineLight: "bg-black/10 text-white hover:bg-white hover:text-susu-text border-white/75 backdrop-blur-sm",
   danger: "bg-susu-red text-white hover:brightness-95 border-susu-red"
 };
 
@@ -23,7 +24,7 @@ export function buttonClassName({
   size?: keyof typeof sizes;
   className?: string;
 }) {
-  return `inline-flex items-center justify-center gap-2 rounded-lg border font-semibold transition ${variants[variant]} ${sizes[size]} ${className}`;
+  return `inline-flex items-center justify-center gap-2 rounded-sm border font-semibold transition duration-200 ${variants[variant]} ${sizes[size]} ${className}`;
 }
 
 export function Button({

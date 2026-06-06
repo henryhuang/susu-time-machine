@@ -6,16 +6,16 @@ const config: Config = {
     extend: {
       colors: {
         peach: {
-          50: "#fff5f7",
-          100: "#fde8ee",
-          500: "#f28ba8",
-          600: "#e57494"
+          50: "#fff4f1",
+          100: "#f9d8d2",
+          500: "#ef6f5e",
+          600: "#d95b4b"
         },
         susu: {
-          bg: "#fff8fa",
-          text: "#2f2a2a",
-          muted: "#7a6f6f",
-          line: "#ede6e3",
+          bg: "#f8f6f1",
+          text: "#211f1c",
+          muted: "#6f6b64",
+          line: "#dedbd4",
           blue: "#7db7e8",
           green: "#7bcfa6",
           orange: "#f3a85c",
@@ -23,9 +23,9 @@ const config: Config = {
         }
       },
       boxShadow: {
-        card: "0 8px 24px rgba(74, 52, 52, 0.06)",
-        soft: "0 4px 12px rgba(74, 52, 52, 0.05)",
-        popover: "0 12px 32px rgba(74, 52, 52, 0.1)"
+        card: "0 18px 50px rgba(32, 29, 24, 0.08)",
+        soft: "0 8px 24px rgba(32, 29, 24, 0.06)",
+        popover: "0 20px 60px rgba(32, 29, 24, 0.16)"
       }
     }
   },

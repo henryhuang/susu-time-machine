@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ImagePreview } from "@/components/site/image-preview";
+import { StoryShareCard } from "@/components/site/story-share-card";
 import { Tag } from "@/components/ui/tag";
 import { formatDate } from "@/lib/dates";
 import { getImageUrl } from "@/lib/images";
@@ -32,27 +33,30 @@ export default async function StoryDetailPage({ params }: { params: Promise<{ id
   const paragraphs = story.content.split(/\n+/).filter(Boolean);
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
-      <article className="rounded-lg border border-susu-line bg-white p-4 shadow-card sm:p-8">
-        <div className="text-sm font-semibold text-peach-600">{formatDate(story.storyDate)}</div>
-        <h1 className="mt-3 text-3xl font-extrabold leading-tight sm:text-4xl">{story.title}</h1>
-        <p className="mt-4 text-base leading-8 text-susu-muted">{story.summary}</p>
-        <div className="mt-5 flex flex-wrap gap-2">
-          {story.tags.map((tag) => (
-            <Tag key={tag}>{tag}</Tag>
-          ))}
+    <main className="bg-white pb-20">
+      <article>
+        <header className="mx-auto max-w-4xl px-5 pb-10 pt-14 text-center sm:px-8 sm:pb-14 sm:pt-20">
+          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-peach-600">{formatDate(story.storyDate)}</div>
+          <h1 className="display-serif mt-5 text-balance text-4xl font-semibold leading-tight sm:text-6xl">{story.title}</h1>
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-susu-muted">{story.summary}</p>
+          <div className="mt-6 flex flex-wrap justify-center gap-2">
+            {story.tags.map((tag) => (
+              <Tag key={tag}>{tag}</Tag>
+            ))}
+          </div>
+          <StoryShareCard idOrSlug={story.slug || story.id} title={story.title} />
+        </header>
+        <div className="relative mx-auto aspect-[16/9] max-h-[760px] max-w-[1440px] overflow-hidden bg-[#ebe7df]">
+          <Image src={getImageUrl(story.coverImage)} alt={story.title} fill priority sizes="100vw" className="object-cover" />
         </div>
-        <div className="relative mt-8 aspect-[16/10] overflow-hidden rounded-lg bg-peach-50">
-          <Image src={getImageUrl(story.coverImage)} alt={story.title} fill priority sizes="(max-width: 896px) 100vw, 896px" className="object-cover" />
-        </div>
-        <div className="story-content mt-8 text-[16px] leading-8 text-susu-text">
+        <div className="story-content mx-auto mt-12 max-w-2xl px-5 text-[16px] leading-9 text-susu-text sm:mt-16 sm:px-8">
           {paragraphs.map((paragraph, index) => (
             <p key={index}>{paragraph}</p>
           ))}
         </div>
         {story.images.length > 0 ? (
-          <section className="mt-10">
-            <h2 className="mb-4 text-xl font-bold">照片</h2>
+          <section className="mx-auto mt-16 max-w-6xl px-5 sm:px-8">
+            <h2 className="display-serif mb-6 border-b border-susu-line pb-4 text-2xl font-semibold">照片</h2>
             <ImagePreview images={story.images} />
           </section>
         ) : null}

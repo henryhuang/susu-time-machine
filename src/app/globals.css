@@ -3,11 +3,12 @@
 @tailwind utilities;
 
 :root {
-  --bg: #fff8fa;
+  --bg: #f8f6f1;
   --panel: #ffffff;
-  --line: #ede6e3;
-  --text: #2f2a2a;
-  --muted: #7a6f6f;
+  --line: #dedbd4;
+  --text: #211f1c;
+  --muted: #6f6b64;
+  --accent: #ef6f5e;
 }
 
 * {
@@ -22,7 +23,10 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: Inter, "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
 button,
@@ -33,18 +37,27 @@ select {
 }
 
 img {
+  display: block;
   max-width: 100%;
 }
 
 ::selection {
-  background: #fde8ee;
-  color: #2f2a2a;
+  background: #f9cfc8;
+  color: #211f1c;
 }
 
 .story-content p {
-  margin: 0 0 1rem;
+  margin: 0 0 1.5rem;
 }
 
 .story-content p:last-child {
   margin-bottom: 0;
+}
+
+.display-serif {
+  font-family: "Songti SC", "STSong", "SimSun", serif;
+}
+
+.text-balance {
+  text-wrap: balance;
 }
