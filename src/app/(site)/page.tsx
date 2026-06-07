@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
@@ -8,10 +9,54 @@ import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/dates";
 import { getImageUrl } from "@/lib/images";
 import { storyHref } from "@/lib/links";
+import { absoluteUrl, getRequestSiteUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
 const defaultHeroImage = "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&w=1200&q=80";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const requestSiteUrl = await getRequestSiteUrl();
+  const canonicalUrl = absoluteUrl("/", requestSiteUrl);
+  const shareImage = absoluteUrl("/share/stories-logo.png", requestSiteUrl);
+  const description = "那些小小的表情、第一次和普通日常，都值得被好好保存。";
+
+  return {
+    title: "酥酥时光机",
+    description,
+    alternates: {
+      canonical: canonicalUrl
+    },
+    openGraph: {
+      title: "酥酥时光机",
+      description,
+      url: canonicalUrl,
+      siteName: "酥酥时光机",
+      locale: "zh_CN",
+      type: "website",
+      images: [
+        {
+          url: shareImage,
+          width: 1200,
+          height: 630,
+          alt: "酥酥时光机"
+        }
+      ]
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "酥酥时光机",
+      description,
+      images: [shareImage]
+    },
+    other: {
+      "og:image:secure_url": shareImage,
+      "og:image:type": "image/png",
+      "og:image:width": "1200",
+      "og:image:height": "630"
+    }
+  };
+}
 
 export default async function HomePage() {
   const [stories, heroConfig] = await Promise.all([
