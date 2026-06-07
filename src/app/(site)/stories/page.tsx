@@ -1,8 +1,53 @@
+import type { Metadata } from "next";
 import { TimelineStoryEntry } from "@/components/site/timeline-story-entry";
 import { TimelineYearMenu } from "@/components/site/timeline-year-menu";
+import { absoluteUrl, getRequestSiteUrl } from "@/lib/site";
 import { listStories } from "@/server/stories";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const requestSiteUrl = await getRequestSiteUrl();
+  const canonicalUrl = absoluteUrl("/stories", requestSiteUrl);
+  const shareImage = absoluteUrl("/share/stories-logo.png", requestSiteUrl);
+  const description = "沿着时间轴，收藏酥酥慢慢长大的每一段故事。";
+
+  return {
+    title: "成长时间轴",
+    description,
+    alternates: {
+      canonical: canonicalUrl
+    },
+    openGraph: {
+      title: "成长时间轴 | 酥酥时光机",
+      description,
+      url: canonicalUrl,
+      siteName: "酥酥时光机",
+      locale: "zh_CN",
+      type: "website",
+      images: [
+        {
+          url: shareImage,
+          width: 1200,
+          height: 630,
+          alt: "酥酥时光机"
+        }
+      ]
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "成长时间轴 | 酥酥时光机",
+      description,
+      images: [shareImage]
+    },
+    other: {
+      "og:image:secure_url": shareImage,
+      "og:image:type": "image/png",
+      "og:image:width": "1200",
+      "og:image:height": "630"
+    }
+  };
+}
 
 export default async function StoriesPage() {
   const firstPage = await listStories({ page: 1, pageSize: 50 });
