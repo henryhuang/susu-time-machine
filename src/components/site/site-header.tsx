@@ -34,6 +34,9 @@ export function SiteHeader() {
           </span>
         </Link>
         <nav className={`hidden items-center gap-8 text-sm font-semibold sm:flex ${lightText}`}>
+          <Link href="/" className="transition hover:text-peach-500">
+            首页
+          </Link>
           <Link href="/stories" className="transition hover:text-peach-500">
             成长时间轴
           </Link>
@@ -44,6 +47,7 @@ export function SiteHeader() {
       </div>
       {open ? (
         <nav className={`mx-5 mb-4 grid gap-1 border p-2 text-sm font-semibold sm:hidden ${isHome ? "border-white/25 bg-black/70 text-white backdrop-blur" : "border-susu-line bg-white text-susu-text"}`}>
+          <Link href="/" className="px-4 py-3" onClick={() => setOpen(false)}>首页</Link>
           <Link href="/stories" className="px-4 py-3" onClick={() => setOpen(false)}>成长时间轴</Link>
         </nav>
       ) : null}
