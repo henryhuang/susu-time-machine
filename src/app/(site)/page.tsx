@@ -8,17 +8,19 @@ import { listStories } from "@/server/stories";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/dates";
 import { getImageUrl } from "@/lib/images";
+import { defaultHeroImage, resolveHeroImage } from "@/lib/hero-image";
 import { storyHref } from "@/lib/links";
 import { absoluteUrl, getRequestSiteUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
-const defaultHeroImage = "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&w=1200&q=80";
-
 export async function generateMetadata(): Promise<Metadata> {
   const requestSiteUrl = await getRequestSiteUrl();
   const canonicalUrl = absoluteUrl("/", requestSiteUrl);
-  const shareImage = absoluteUrl("/share/stories-logo.png", requestSiteUrl);
+  const heroConfig = await prisma.siteConfig.findUnique({ where: { key: "home_hero_image" } }).catch(() => null);
+  const heroImage = resolveHeroImage(heroConfig?.value);
+  const shareImage = absoluteUrl(heroImage.shareCard || "/share/stories-logo.png", requestSiteUrl);
+  const shareImageType = heroImage.shareCard ? "image/jpeg" : "image/png";
   const description = "那些小小的表情、第一次和普通日常，都值得被好好保存。";
 
   return {
@@ -51,7 +53,7 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     other: {
       "og:image:secure_url": shareImage,
-      "og:image:type": "image/png",
+      "og:image:type": shareImageType,
       "og:image:width": "1200",
       "og:image:height": "630"
     }
@@ -63,20 +65,27 @@ export default async function HomePage() {
     listStories({ pageSize: 3 }),
     prisma.siteConfig.findUnique({ where: { key: "home_hero_image" } }).catch(() => null)
   ]);
-  const heroImage = heroConfig?.value || defaultHeroImage;
+  const heroImage = resolveHeroImage(heroConfig?.value || defaultHeroImage);
+  const heroSrcSet = heroImage.variants.map((variant) => `${variant.url} ${variant.width}w`).join(", ");
   const [featuredStory, ...otherStories] = stories.items;
 
   return (
     <main className="bg-white">
       <section className="relative flex min-h-[680px] items-end overflow-hidden bg-[#25221d] sm:min-h-[760px] lg:min-h-[560px]">
-        <Image
-          src={heroImage}
-          alt="酥酥的成长照片"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-center"
-        />
+        <picture className="absolute inset-0">
+          {heroSrcSet ? <source type="image/webp" srcSet={heroSrcSet} sizes="100vw" /> : null}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={heroImage.src}
+            alt={heroImage.alt}
+            width={heroImage.width}
+            height={heroImage.height}
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
+            className="h-full w-full object-cover object-center"
+          />
+        </picture>
         <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/25 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10" />
         <div className="relative mx-auto w-full max-w-[1440px] px-5 pb-14 text-white sm:px-8 sm:pb-20 lg:px-14 lg:pb-24">

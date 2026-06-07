@@ -4,6 +4,14 @@ import { FormEvent, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
 import { Toast } from "@/components/ui/toast";
+import { parseHeroImageConfig, resolveHeroImage, serializeHeroImageConfig } from "@/lib/hero-image";
+import type { HeroImageConfig } from "@/types/hero-image";
+
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
 
 export function SettingsForm({
   homeHeroImage,
@@ -12,15 +20,22 @@ export function SettingsForm({
   homeHeroImage: string;
   fallbackImage: string;
 }) {
-  const [heroImage, setHeroImage] = useState(homeHeroImage);
-  const [previewUrl, setPreviewUrl] = useState(homeHeroImage || fallbackImage);
+  const initialHero = resolveHeroImage(homeHeroImage);
+  const [heroImageValue, setHeroImageValue] = useState(homeHeroImage);
+  const [heroImageUrl, setHeroImageUrl] = useState(initialHero.src);
+  const [heroImageConfig, setHeroImageConfig] = useState<HeroImageConfig | null>(
+    parseHeroImageConfig(homeHeroImage)
+  );
+  const [previewUrl, setPreviewUrl] = useState(initialHero.src || fallbackImage);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
   function handleUrlChange(url: string) {
-    setHeroImage(url);
+    setHeroImageValue(url);
+    setHeroImageUrl(url);
+    setHeroImageConfig(null);
     setPreviewUrl(url || fallbackImage);
   }
 
@@ -30,10 +45,16 @@ export function SettingsForm({
     try {
       const form = new FormData();
       form.append("file", file[0]);
-      const res = await fetch("/api/upload/image", { method: "POST", body: form });
+      const res = await fetch("/api/upload/hero", { method: "POST", body: form });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "上传失败");
-      handleUrlChange(data.url);
+      const config = data.heroImage as HeroImageConfig;
+      setHeroImageConfig(config);
+      setHeroImageValue(serializeHeroImageConfig(config));
+      setHeroImageUrl(config.variants["1200"]?.url || Object.values(config.variants)[0]?.url || "");
+      setPreviewUrl(config.variants["1200"]?.url || Object.values(config.variants)[0]?.url || fallbackImage);
+      const warning = Array.isArray(data.warnings) ? data.warnings.join("；") : "";
+      setToast(warning ? `上传成功；${warning}` : "上传并优化成功");
     } catch (err) {
       setToast(err instanceof Error ? err.message : "上传失败");
     } finally {
@@ -49,7 +70,7 @@ export function SettingsForm({
       const res = await fetch("/api/admin/site-config", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ home_hero_image: heroImage })
+        body: JSON.stringify({ home_hero_image: heroImageValue })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "保存失败");
@@ -72,9 +93,9 @@ export function SettingsForm({
       ) : null}
       <form onSubmit={submit} className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
         <section className="grid gap-4 rounded-lg border border-susu-line bg-white p-4 shadow-card">
-          <Field label="首页主图" hint="显示在首页右侧的大图，支持输入外部 URL 或上传图片。留空则使用默认图片。">
+          <Field label="首页主图" hint="显示为首页首屏背景，支持输入外部 URL 或上传图片。留空则使用默认图片。">
             <Input
-              value={heroImage}
+              value={heroImageUrl}
               onChange={(e) => handleUrlChange(e.target.value)}
               placeholder="输入图片 URL 或点击下方按钮上传"
             />
@@ -91,11 +112,11 @@ export function SettingsForm({
             <input
               ref={inputRef}
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp"
               className="hidden"
               onChange={(e) => upload(e.target.files)}
             />
-            {heroImage ? (
+            {heroImageValue ? (
               <Button
                 type="button"
                 variant="ghost"
@@ -118,6 +139,23 @@ export function SettingsForm({
                 className="h-full w-full object-cover"
               />
             </div>
+            {heroImageConfig ? (
+              <div className="mt-4 grid gap-2 text-xs leading-5 text-susu-muted">
+                <div>
+                  原图：{heroImageConfig.width} × {heroImageConfig.height}，{formatBytes(heroImageConfig.originalSize)}
+                </div>
+                {Object.values(heroImageConfig.variants)
+                  .sort((a, b) => a.width - b.width)
+                  .map((variant) => (
+                    <div key={variant.width}>
+                      WebP：{variant.width} × {variant.height}，{formatBytes(variant.size)}
+                    </div>
+                  ))}
+                <div>分享图：1200 × 630（JPG + WebP）</div>
+              </div>
+            ) : (
+              <p className="mt-4 text-xs leading-5 text-susu-muted">当前为兼容 URL 模式，上传新图片后会自动生成响应式版本。</p>
+            )}
             <div className="mt-4">
               <Button variant="primary" className="w-full" disabled={saving}>
                 {saving ? "保存中..." : "保存设置"}
