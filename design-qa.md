@@ -1,44 +1,44 @@
 **Comparison Target**
 
-- Source avatar asset: `public/characters/xiaoya-avatar.webp`
-- Source animated character: `public/characters/xiaoya-loop.gif`
-- Desktop implementation: `docs/design-references/implementation-home-character-1440.png`
-- Mobile implementation: `docs/design-references/implementation-home-character-mobile.png`
-- Combined comparison: `docs/design-references/home-character-comparison.png`
-- Viewports: 1440 x 1024 and 390 x 844
-- State: public home page with the character animation running
+- Source visual truth: `/Users/yijiehuang/.codex/generated_images/019ea20b-1560-7a40-ab88-61a19b3bff12/ig_004d611bda92093f016a2565ac07088191bef8bb6bdded7d43.png`
+- Implementation route: `http://localhost:3000/stories`
+- Implementation screenshot: unavailable because the in-app browser security policy blocked the local URL
+- Intended viewports: 1440 x 1024 and 390 x 844
+- State: public growth timeline, newest stories first
 
 **Full-View Comparison Evidence**
 
-- The avatar is integrated into the existing brand lockup at 44px without changing the navigation hierarchy.
-- The animated full-body character remains secondary to the real growth photograph and sits in the unused lower-right hero area.
-- Desktop and mobile compositions preserve the original editorial layout, content order, and calls to action.
+- The selected source visual was opened and inspected.
+- The implementation route responds with HTTP 200 and the production build succeeds.
+- A rendered implementation screenshot could not be captured, so a same-viewport combined visual comparison was not possible.
 
 **Focused Region Comparison Evidence**
 
-- The combined comparison board shows the source avatar and full-body character beside both rendered breakpoints.
-- Facial features, glasses, flower clip, dress pattern, shoes, and transparent silhouette remain recognizable after optimization.
-- Mobile bounding-box checks confirm that the character does not overlap the heading or either hero button.
+- Blocked with the full-view capture. Typography, timeline alignment, image crops, and mobile wrapping could not be judged from rendered evidence.
 
 **Findings**
 
-- No actionable P0, P1, or P2 findings remain.
-- Fonts and typography: the existing Song-style display hierarchy and sans-serif body copy are unchanged; the avatar does not compress or rewrap the brand text.
-- Spacing and layout rhythm: the 44px avatar aligns with the 80px header, while the companion scales from 116px to 188px and stays anchored to the hero baseline.
-- Colors and visual tokens: the warm pink character palette complements the existing coral accent without competing with the photographic greens.
-- Image quality and asset fidelity: the avatar is sharp at display size; the GIF preserves animation and transparency with no white rectangle or visible compression artifacts.
-- Copy and content: all existing labels, story content, navigation, and routes remain unchanged.
-- Interaction and responsiveness: mobile navigation still opens correctly, the decorative GIF ignores pointer input, and reduced-motion users do not receive the animation.
+- [P1] Rendered visual comparison is unavailable.
+  Location: `/stories`, desktop and mobile.
+  Evidence: the source mock is available, but the local implementation URL was rejected by the browser security policy.
+  Impact: visual fidelity and responsive quality cannot be certified.
+  Fix: capture `/stories` at 1440 x 1024 and 390 x 844 in an allowed browser session, create a combined comparison image, and resolve any visible P0/P1/P2 differences.
 
 **Patches Made Since Previous Pass**
 
-- Added the character avatar to the site header.
-- Added the responsive animated companion to the homepage hero.
-- Re-encoded the GIF with a transparent palette after the first resize introduced a white background.
-- Reduced the source assets to web-sized derivatives: 192 x 192 WebP avatar and 360 x 450 GIF.
+- Replaced the generic story-card list with an editorial photo-gallery timeline.
+- Added year grouping and sticky year navigation.
+- Added continuous date rails, date nodes, variable image proportions, story tags, and reading links.
+- Added a compact mobile timeline layout.
+
+**Implementation Checklist**
+
+- Capture desktop and mobile renders.
+- Compare typography, spacing, colors, image crops, and copy against the selected source.
+- Fix all visible P0/P1/P2 issues before marking the visual QA as passed.
 
 **Follow-up Polish**
 
-- P3: Future character poses can reuse the same two placements without changing the page layout.
+- None classified until rendered comparison is available.
 
-final result: passed
+final result: blocked
