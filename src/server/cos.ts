@@ -30,6 +30,41 @@ export function buildObjectKey(filename: string) {
   return `${prefix}/${year}/${month}/${random}.${safeExt}`;
 }
 
+export function buildHeroObjectKeys(sourceExtension: string) {
+  const prefix = (process.env.TENCENT_COS_UPLOAD_PREFIX || "susu/stories").replace(/\/$/, "");
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const id = randomUUID();
+  const base = `${prefix}/hero/${year}/${month}`;
+
+  return {
+    original: `${base}/original/${id}.${sourceExtension}`,
+    processed: (suffix: string) => `${base}/processed/${id}-${suffix}`
+  };
+}
+
+export async function putCosObject(key: string, body: Buffer, contentType: string) {
+  const cos = getCosClient();
+  const { Bucket, Region } = getCosConfig();
+
+  await new Promise((resolve, reject) => {
+    cos.putObject(
+      {
+        Bucket,
+        Region,
+        Key: key,
+        Body: body,
+        ContentType: contentType
+      },
+      (error, data) => {
+        if (error) reject(error);
+        else resolve(data);
+      }
+    );
+  });
+}
+
 export function publicUrlForKey(key: string) {
   const base = process.env.TENCENT_COS_PUBLIC_BASE_URL?.replace(/\/$/, "");
   if (base) return `${base}/${key}`;

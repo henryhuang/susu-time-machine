@@ -4,6 +4,7 @@ import { Images, Rows3, Users } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { formatDate } from "@/lib/dates";
 import { getImageUrl } from "@/lib/images";
+import { resolveHeroImage } from "@/lib/hero-image";
 import { storyHref } from "@/lib/links";
 import { prisma } from "@/lib/prisma";
 import { listStories } from "@/server/stories";
@@ -21,7 +22,7 @@ export default async function AdminDashboardPage() {
     listStories({ pageSize: 3 }),
     prisma.siteConfig.findUnique({ where: { key: "home_hero_image" } }).catch(() => null)
   ]);
-  const heroImage = heroConfig?.value || defaultHeroImage;
+  const heroImage = resolveHeroImage(heroConfig?.value || defaultHeroImage);
 
   return (
     <ProtectedAdmin>
@@ -39,7 +40,7 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
         <div className="relative hidden overflow-hidden rounded-lg lg:block">
-          <Image src={heroImage} alt="亲子成长照片" fill sizes="260px" className="object-cover" />
+          <Image src={heroImage.src} alt={heroImage.alt} fill sizes="260px" className="object-cover" />
         </div>
       </section>
 

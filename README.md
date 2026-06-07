@@ -123,6 +123,8 @@ model StoryImage {
 
 - COS 客户端与路径生成：`src/server/cos.ts`
 - 上传接口：`src/app/api/upload/image/route.ts`
+- 首页 Hero 专用上传接口：`src/app/api/upload/hero/route.ts`
+- 首页 Hero 图片处理：`src/server/hero-image-processor.ts`
 - 后台上传 UI：`src/components/admin/upload-widget.tsx`
 
 上传路径格式示例：
@@ -132,6 +134,32 @@ susu/stories/2026/04/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.jpg
 ```
 
 前端只把图片文件提交给 `/api/upload/image`，由服务端读取 COS 配置并上传。
+
+## 首页 Hero 图片上传优化说明
+
+后台“站点设置”中的首页主图使用专用上传流程：
+
+- 支持 JPG/JPEG、PNG、WebP，单文件最大 10MB。
+- 服务端使用 `sharp` 自动修正 EXIF 方向，并生成 800w、1200w WebP；原图宽度达到 1600px 时额外生成 1600w WebP。
+- 同时居中裁剪生成 1200 × 630 的 JPG 和 WebP 分享图。首页 Open Graph 和微信分享优先使用 JPG。
+- 原图会保留在 COS，但首页不会直接加载原图。
+- 首页通过 `<picture>`、`srcset` 和 `sizes` 自动选择合适的 WebP 变体，默认图片为 1200w，并设置首屏高优先级加载。
+- 原图宽度小于 800px 时上传仍会完成，后台会提示清晰度风险。
+
+COS 对象路径按以下结构保存，实际前缀由 `TENCENT_COS_UPLOAD_PREFIX` 控制：
+
+```text
+<prefix>/hero/<year>/<month>/original/<uuid>.<ext>
+<prefix>/hero/<year>/<month>/processed/<uuid>-800.webp
+<prefix>/hero/<year>/<month>/processed/<uuid>-1200.webp
+<prefix>/hero/<year>/<month>/processed/<uuid>-1600.webp
+<prefix>/hero/<year>/<month>/processed/<uuid>-share-1200x630.jpg
+<prefix>/hero/<year>/<month>/processed/<uuid>-share-1200x630.webp
+```
+
+`home_hero_image` 仍使用原有 `SiteConfig` 字符串字段：旧数据中的单一 URL 会继续使用；新上传图片保存为 JSON 元数据并优先使用 `variants`。手动输入外部 URL 仍会保存为旧格式。
+
+如果以后迁移到 OSS、S3 或其他对象存储，只需替换 `src/server/cos.ts` 中的对象上传和公开 URL 生成逻辑；`src/server/hero-image-processor.ts`、配置结构和前端响应式渲染无需改变。
 
 ## API 接口实现代码
 
