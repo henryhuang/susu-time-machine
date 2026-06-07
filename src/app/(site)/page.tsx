@@ -81,7 +81,7 @@ export default async function HomePage() {
               <Link href={storyHref(featuredStory)} className="display-serif mt-7 text-3xl font-semibold leading-tight transition hover:text-peach-600 sm:text-4xl">
                 {featuredStory.title}
               </Link>
-              <p className="mt-4 max-w-md text-sm leading-7 text-susu-muted">{featuredStory.summary}</p>
+              {featuredStory.summary ? <p className="mt-4 max-w-md text-sm leading-7 text-susu-muted">{featuredStory.summary}</p> : null}
               <Link href={storyHref(featuredStory)} className="mt-8 inline-flex text-peach-500 transition hover:translate-x-1" aria-label={`阅读${featuredStory.title}`}>
                 <ArrowRight className="h-7 w-7" />
               </Link>

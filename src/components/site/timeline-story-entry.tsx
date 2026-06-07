@@ -54,7 +54,7 @@ export function TimelineStoryEntry({ story, index }: { story: StoryDTO; index: n
             >
               {story.title}
             </Link>
-            <p className="mt-3 line-clamp-3 text-sm leading-7 text-susu-muted">{story.summary}</p>
+            {story.summary ? <p className="mt-3 line-clamp-3 text-sm leading-7 text-susu-muted">{story.summary}</p> : null}
             {story.tags.length > 0 ? (
               <div className="mt-4 flex flex-wrap gap-2">
                 {story.tags.slice(0, 3).map((tag, tagIndex) => (

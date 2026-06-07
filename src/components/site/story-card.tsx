@@ -27,7 +27,7 @@ export function StoryCard({ story, compact = false }: { story: StoryDTO; compact
           <Link href={href} className="mt-2 block text-lg font-semibold transition hover:text-peach-600">
             {story.title}
           </Link>
-          <p className="mt-1 line-clamp-2 text-sm leading-6 text-susu-muted">{story.summary}</p>
+          {story.summary ? <p className="mt-1 line-clamp-2 text-sm leading-6 text-susu-muted">{story.summary}</p> : null}
           <Link href={href} className="mt-4 inline-flex text-peach-500 transition group-hover:translate-x-1" aria-label={`阅读${story.title}`}>
             <ArrowRight className="h-5 w-5" />
           </Link>
@@ -52,7 +52,7 @@ export function StoryCard({ story, compact = false }: { story: StoryDTO; compact
         <Link href={href} className="display-serif mt-2 text-2xl font-semibold leading-tight transition hover:text-peach-600 sm:text-3xl">
           {story.title}
         </Link>
-        <p className="mt-3 line-clamp-2 max-w-2xl text-sm leading-7 text-susu-muted">{story.summary}</p>
+        {story.summary ? <p className="mt-3 line-clamp-2 max-w-2xl text-sm leading-7 text-susu-muted">{story.summary}</p> : null}
         <div className="mt-4 flex flex-wrap gap-2">
           {story.tags.length > 0 ? story.tags.map((tag) => <Tag key={tag}>{tag}</Tag>) : <Tag tone="gray">成长</Tag>}
         </div>
