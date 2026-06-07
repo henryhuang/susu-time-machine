@@ -70,7 +70,7 @@ export default async function AdminStoriesPage({
                 <div className="min-w-0">
                   <div className="font-bold">{story.title}</div>
                   {story.slug ? <div className="mt-0.5 text-xs text-peach-600">/{story.slug}</div> : null}
-                  <p className="mt-1 line-clamp-2 text-sm leading-6 text-susu-muted">{story.summary}</p>
+                  {story.summary ? <p className="mt-1 line-clamp-2 text-sm leading-6 text-susu-muted">{story.summary}</p> : null}
                   <p className="mt-2 text-xs text-susu-muted">
                     创建：{formatDate(story.createdAt)} · 更新：{formatDate(story.updatedAt)}
                   </p>
