@@ -5,8 +5,127 @@ import { useEffect, useState } from "react";
 
 type ShareState = "idle" | "wechat" | "copied";
 
-export function WechatShareButton({ title, summary }: { title: string; summary: string }) {
+type WechatShareButtonProps = {
+  title: string;
+  summary: string;
+  imageUrl: string;
+  shareUrl: string;
+};
+
+type WechatJsSdkConfig = {
+  appId: string;
+  timestamp: number;
+  nonceStr: string;
+  signature: string;
+};
+
+type WechatShareData = {
+  title: string;
+  desc?: string;
+  link: string;
+  imgUrl: string;
+};
+
+type WechatJsSdk = {
+  config(config: WechatJsSdkConfig & { debug: boolean; jsApiList: string[] }): void;
+  ready(callback: () => void): void;
+  error(callback: (error: unknown) => void): void;
+  updateAppMessageShareData(data: WechatShareData): void;
+  updateTimelineShareData(data: WechatShareData): void;
+};
+
+declare global {
+  interface Window {
+    wx?: WechatJsSdk;
+  }
+}
+
+const WECHAT_JS_SDK_URL = "https://res.wx.qq.com/open/js/jweixin-1.6.0.js";
+
+function loadWechatJsSdk() {
+  if (window.wx) return Promise.resolve(window.wx);
+
+  return new Promise<WechatJsSdk>((resolve, reject) => {
+    const existingScript = document.querySelector<HTMLScriptElement>(`script[src="${WECHAT_JS_SDK_URL}"]`);
+    const script = existingScript || document.createElement("script");
+
+    const handleLoad = () => {
+      if (window.wx) resolve(window.wx);
+      else reject(new Error("微信 JS-SDK 加载失败"));
+    };
+
+    script.addEventListener("load", handleLoad, { once: true });
+    script.addEventListener("error", () => reject(new Error("微信 JS-SDK 加载失败")), { once: true });
+
+    if (!existingScript) {
+      script.src = WECHAT_JS_SDK_URL;
+      script.async = true;
+      document.head.appendChild(script);
+    }
+  });
+}
+
+export function WechatShareButton({ title, summary, imageUrl, shareUrl }: WechatShareButtonProps) {
   const [state, setState] = useState<ShareState>("idle");
+
+  useEffect(() => {
+    if (!/MicroMessenger/i.test(navigator.userAgent)) return;
+
+    let cancelled = false;
+    const signedUrl = window.location.href.split("#")[0];
+
+    async function configureWechatShare() {
+      try {
+        const [wx, response] = await Promise.all([
+          loadWechatJsSdk(),
+          fetch(`/api/public/wechat/jssdk?url=${encodeURIComponent(signedUrl)}`, {
+            cache: "no-store"
+          })
+        ]);
+
+        const data = (await response.json()) as WechatJsSdkConfig & { message?: string };
+        if (!response.ok) {
+          throw new Error(data.message || "获取微信分享配置失败");
+        }
+        if (cancelled) return;
+
+        wx.config({
+          debug: false,
+          appId: data.appId,
+          timestamp: data.timestamp,
+          nonceStr: data.nonceStr,
+          signature: data.signature,
+          jsApiList: ["updateAppMessageShareData", "updateTimelineShareData"]
+        });
+
+        wx.ready(() => {
+          if (cancelled) return;
+
+          wx.updateAppMessageShareData({
+            title,
+            desc: summary,
+            link: shareUrl,
+            imgUrl: imageUrl
+          });
+          wx.updateTimelineShareData({
+            title,
+            link: shareUrl,
+            imgUrl: imageUrl
+          });
+        });
+        wx.error((error) => {
+          console.error("[wechat-share] JS-SDK 配置失败", error);
+        });
+      } catch (error) {
+        console.error("[wechat-share] 初始化失败", error);
+      }
+    }
+
+    void configureWechatShare();
+    return () => {
+      cancelled = true;
+    };
+  }, [imageUrl, shareUrl, summary, title]);
 
   useEffect(() => {
     if (state === "idle") return;
@@ -47,7 +166,7 @@ export function WechatShareButton({ title, summary }: { title: string; summary: 
         await navigator.share({
           title,
           text: summary,
-          url: window.location.href
+          url: shareUrl
         });
         return;
       } catch (error) {

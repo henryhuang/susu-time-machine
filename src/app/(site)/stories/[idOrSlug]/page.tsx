@@ -66,6 +66,9 @@ export default async function StoryDetailPage({ params }: { params: Promise<{ id
   const story = await getStory(idOrSlug);
   if (!story) notFound();
 
+  const requestSiteUrl = await getRequestSiteUrl();
+  const shareUrl = absoluteUrl(storyHref(story), requestSiteUrl);
+  const shareImage = absoluteUrl(getImageUrl(story.coverImage), requestSiteUrl);
   const paragraphs = story.content.split(/\n+/).filter(Boolean);
 
   return (
@@ -80,7 +83,12 @@ export default async function StoryDetailPage({ params }: { params: Promise<{ id
               <Tag key={tag}>{tag}</Tag>
             ))}
           </div>
-          <WechatShareButton title={story.title} summary={story.summary || story.title} />
+          <WechatShareButton
+            title={story.title}
+            summary={story.summary || `${story.title} - 酥酥的成长故事`}
+            imageUrl={shareImage}
+            shareUrl={shareUrl}
+          />
         </header>
         <div className="relative mx-auto aspect-[16/9] max-h-[760px] max-w-[1440px] overflow-hidden bg-[#ebe7df]">
           <Image src={getImageUrl(story.coverImage)} alt={story.title} fill priority sizes="100vw" className="object-cover" />
