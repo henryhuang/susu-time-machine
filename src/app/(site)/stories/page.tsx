@@ -23,7 +23,7 @@ export default async function StoriesPage() {
       groups[year] = [...(groups[year] || []), story];
       return groups;
     }, {})
-  );
+  ).sort(([yearA], [yearB]) => Number(yearB) - Number(yearA));
   const years = storyGroups.map(([year]) => year);
 
   return (
