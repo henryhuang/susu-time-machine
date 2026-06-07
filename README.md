@@ -231,6 +231,8 @@ AI_MAX_IMAGE_INPUTS="3"
 
 WECHAT_PERSONAL_ASSET_APPID=""
 WECHAT_PERSONAL_ASSET_SECRET=""
+WECHAT_OFFICIAL_ACCOUNT_APP_ID=""
+WECHAT_OFFICIAL_ACCOUNT_APP_SECRET=""
 PERSONAL_ASSET_AUTHORIZED_OPENIDS=""
 
 TENCENT_COS_SECRET_ID=""
@@ -240,6 +242,25 @@ TENCENT_COS_REGION="ap-shanghai"
 TENCENT_COS_PUBLIC_BASE_URL=""
 TENCENT_COS_UPLOAD_PREFIX="susu/stories"
 ```
+
+## 微信公众号分享卡片
+
+故事详情页会在微信内通过公众号 JS-SDK 设置分享给朋友和朋友圈时使用的标题、摘要、封面及链接。生产环境请配置：
+
+```env
+APP_URL="https://susu-time-machine.cnhalo.com"
+WECHAT_OFFICIAL_ACCOUNT_APP_ID="公众号 AppID"
+WECHAT_OFFICIAL_ACCOUNT_APP_SECRET="公众号 AppSecret"
+```
+
+同时在微信公众平台完成以下设置：
+
+1. 在“设置与开发 → 公众号设置 → 功能设置”中，将 `susu-time-machine.cnhalo.com` 配置为 JS 接口安全域名。
+2. 按公众平台提示完成域名校验；仓库已包含 `public/MP_verify_iggJCjmKa8xBPrpV.txt`，部署后应能通过 `https://susu-time-machine.cnhalo.com/MP_verify_iggJCjmKa8xBPrpV.txt` 访问。
+3. 在“设置与开发 → 基本配置”中，把服务器出口公网 IP 加入 IP 白名单，否则服务端无法获取 `access_token`。
+4. 确保公众号账号拥有 JS-SDK 分享接口权限，并使用 HTTPS 访问页面。
+
+服务端接口 `GET /api/public/wechat/jssdk?url=...` 负责缓存 `access_token` 和 `jsapi_ticket` 并生成页面签名；公众号 AppSecret 不会发送到浏览器。
 
 COS 说明：
 
