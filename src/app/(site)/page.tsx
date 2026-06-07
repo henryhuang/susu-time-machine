@@ -35,19 +35,31 @@ export default async function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/25 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10" />
         <div className="relative mx-auto w-full max-w-[1440px] px-5 pb-14 text-white sm:px-8 sm:pb-20 lg:px-14 lg:pb-24">
-          <h1 className="display-serif text-balance max-w-3xl text-4xl font-semibold leading-[1.35] tracking-[0.03em] sm:text-5xl lg:text-6xl">
-            把酥酥的每一个小小瞬间，放进一台温柔的时光机。
-          </h1>
-          <p className="mt-5 max-w-xl text-sm leading-7 text-white/72 sm:text-base">
-            第一次认真搭城堡，第一次在草地上追泡泡，普通日常里闪亮的表情，都在这里按日期好好保存。
-          </p>
-          <div className="mt-8 flex flex-wrap gap-4">
-            <ButtonLink href="/stories" variant="primary" size="lg" className="min-w-44">
-              打开成长时间轴
-            </ButtonLink>
-            <ButtonLink href="/admin/stories/new" variant="outlineLight" size="lg" className="min-w-40">
-              记录新故事
-            </ButtonLink>
+          <div className="relative z-10 max-w-[calc(100%-5.5rem)] sm:max-w-[calc(100%-8rem)] lg:max-w-3xl">
+            <h1 className="display-serif text-balance text-4xl font-semibold leading-[1.35] tracking-[0.03em] sm:text-5xl lg:text-6xl">
+              把酥酥的每一个小小瞬间，放进一台温柔的时光机。
+            </h1>
+            <p className="mt-5 max-w-xl text-sm leading-7 text-white/72 sm:text-base">
+              第一次认真搭城堡，第一次在草地上追泡泡，普通日常里闪亮的表情，都在这里按日期好好保存。
+            </p>
+            <div className="mt-8 flex flex-wrap gap-4">
+              <ButtonLink href="/stories" variant="primary" size="lg" className="min-w-44">
+                打开成长时间轴
+              </ButtonLink>
+              <ButtonLink href="/admin/stories/new" variant="outlineLight" size="lg" className="min-w-40">
+                记录新故事
+              </ButtonLink>
+            </div>
+          </div>
+          <div className="xiaoya-companion pointer-events-none absolute bottom-0 right-1 z-0 w-[116px] sm:right-6 sm:w-[150px] lg:right-12 lg:w-[188px]" aria-hidden="true">
+            <div className="absolute bottom-2 left-1/2 h-8 w-[82%] -translate-x-1/2 rounded-full bg-[#f7c8c2]/45 blur-xl" />
+            <img
+              src="/characters/xiaoya-loop.gif"
+              alt=""
+              width="360"
+              height="450"
+              className="relative h-auto w-full drop-shadow-[0_12px_18px_rgba(0,0,0,0.28)]"
+            />
           </div>
         </div>
       </section>
