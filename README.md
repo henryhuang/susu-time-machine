@@ -66,6 +66,7 @@ model Story {
   title       String
   summary     String
   content     String
+  location    String       @default("")
   coverImage  String?
   storyDate   DateTime
   tags        String       @default("[]")

@@ -21,6 +21,7 @@ model Story {
   slug       String?      @unique
   summary    String
   content    String
+  location   String       @default("")
   coverImage String?
   storyDate  DateTime
   tags       String       @default("[]")

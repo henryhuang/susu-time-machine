@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import { MapPin } from "lucide-react";
 import { notFound } from "next/navigation";
 import { ImagePreview } from "@/components/site/image-preview";
 import { Tag } from "@/components/ui/tag";
@@ -75,7 +76,15 @@ export default async function StoryDetailPage({ params }: { params: Promise<{ id
     <main className="bg-white pb-20">
       <article>
         <header className="mx-auto max-w-4xl px-5 pb-10 pt-14 text-center sm:px-8 sm:pb-14 sm:pt-20">
-          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-peach-600">{formatDate(story.storyDate)}</div>
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-xs font-semibold uppercase tracking-[0.2em] text-peach-600">
+            <span>{formatDate(story.storyDate)}</span>
+            {story.location ? (
+              <span className="inline-flex items-center gap-1 normal-case tracking-normal text-susu-muted">
+                <MapPin className="h-3.5 w-3.5" />
+                {story.location}
+              </span>
+            ) : null}
+          </div>
           <h1 className="display-serif mt-5 text-balance text-4xl font-semibold leading-tight sm:text-6xl">{story.title}</h1>
           {story.summary ? <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-susu-muted">{story.summary}</p> : null}
           <div className="mt-6 flex flex-wrap justify-center gap-2">

@@ -10,6 +10,7 @@ export const storyInputSchema = z.object({
     .optional(),
   summary: z.string().trim().max(240, "摘要不要超过 240 个字").optional().default(""),
   content: z.string().trim().optional().default(""),
+  location: z.string().trim().max(120, "地点不要超过 120 个字").optional().default(""),
   storyDate: z.string().min(1, "请选择故事日期"),
   tags: z.array(z.string()).default([]),
   coverImage: z.string().url("封面图地址不正确").or(z.literal("")).optional(),

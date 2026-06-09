@@ -17,11 +17,13 @@ export function SettingsForm({
   homeHeroImage,
   homeHeroTitle,
   homeHeroDescription,
+  defaultStoryLocation,
   fallbackImage
 }: {
   homeHeroImage: string;
   homeHeroTitle: string;
   homeHeroDescription: string;
+  defaultStoryLocation: string;
   fallbackImage: string;
 }) {
   const initialHero = resolveHeroImage(homeHeroImage);
@@ -33,6 +35,7 @@ export function SettingsForm({
   const [previewUrl, setPreviewUrl] = useState(initialHero.src || fallbackImage);
   const [heroTitle, setHeroTitle] = useState(homeHeroTitle);
   const [heroDescription, setHeroDescription] = useState(homeHeroDescription);
+  const [storyLocation, setStoryLocation] = useState(defaultStoryLocation);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -79,7 +82,8 @@ export function SettingsForm({
         body: JSON.stringify({
           home_hero_image: heroImageValue,
           home_hero_title: heroTitle.trim(),
-          home_hero_description: heroDescription.trim()
+          home_hero_description: heroDescription.trim(),
+          default_story_location: storyLocation.trim()
         })
       });
       const data = await res.json();
@@ -103,6 +107,14 @@ export function SettingsForm({
       ) : null}
       <form onSubmit={submit} className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
         <section className="grid gap-4 rounded-lg border border-susu-line bg-white p-4 shadow-card">
+          <Field label="默认故事地点" hint="新建故事时自动填入，可在单个故事中修改或清空。">
+            <Input
+              value={storyLocation}
+              onChange={(e) => setStoryLocation(e.target.value)}
+              maxLength={120}
+              placeholder="例如：上海"
+            />
+          </Field>
           <Field label="Hero 标题" hint="留空则使用首页当前的默认标题，最多 100 个字符。">
             <Textarea
               value={heroTitle}

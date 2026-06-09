@@ -2,10 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/server/auth";
 import { prisma } from "@/lib/prisma";
 
-const VALID_KEYS = new Set(["home_hero_image", "home_hero_title", "home_hero_description"]);
+const VALID_KEYS = new Set([
+  "home_hero_image",
+  "home_hero_title",
+  "home_hero_description",
+  "default_story_location"
+]);
 const MAX_LENGTHS: Record<string, number> = {
   home_hero_title: 100,
-  home_hero_description: 300
+  home_hero_description: 300,
+  default_story_location: 120
 };
 
 export async function GET() {

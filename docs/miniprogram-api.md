@@ -281,6 +281,7 @@ http://susu-time-machine.cnhalo.com/api/public/stories?page=1&pageSize=10
       "title": "酥酥搭了一座小城堡",
       "summary": "今天酥酥在客厅地垫上搭了很久的积木。",
       "content": "今天酥酥在客厅地垫上搭了很久的积木。她先把粉色和蓝色的积木分开，又把最高的一块放在中间，说这是城堡的塔。",
+      "location": "上海",
       "coverImage": "https://susu-img-wx.cnhalo.com/mini-app/user-susu/2026/04/demo.jpg",
       "storyDate": "2026-04-20T00:00:00.000Z",
       "tags": ["日常", "成长"],
@@ -349,6 +350,7 @@ http://susu-time-machine.cnhalo.com/api/public/stories/cmoxxxxx001
     "title": "酥酥搭了一座小城堡",
     "summary": "今天酥酥在客厅地垫上搭了很久的积木。",
     "content": "今天酥酥在客厅地垫上搭了很久的积木。\n她先把粉色和蓝色的积木分开。\n最后她给小熊留了一扇门。",
+    "location": "上海",
     "coverImage": "https://susu-img-wx.cnhalo.com/mini-app/user-susu/2026/04/demo-cover.jpg",
     "storyDate": "2026-04-20T00:00:00.000Z",
     "tags": ["日常", "成长"],
@@ -405,6 +407,7 @@ export type Story = {
   title: string;
   summary: string;
   content: string;
+  location: string;
   coverImage: string | null;
   storyDate: string;
   tags: string[];
@@ -692,10 +695,10 @@ type State = {
 4. 如果 applicationStatus 为 pending，展示“申请已提交，等待审核”，不进入故事列表。
 5. 如果 applicationStatus 为 approved，实现成长故事列表页，调用 GET /api/public/stories?page=1&pageSize=10；后续浏览列表、详情、分页、刷新都不要重复调用权限检查接口。
 6. 支持下拉刷新和上拉加载更多。
-7. 列表卡片展示 coverImage、title、summary、storyDate、tags。
+7. 列表卡片展示 coverImage、title、summary、storyDate、location、tags。
 8. 点击故事进入详情页。
 9. 详情页调用 GET /api/public/stories/:id。
-10. 详情页展示 title、storyDate、tags、coverImage、content 和 images。
+10. 详情页展示 title、storyDate、location、tags、coverImage、content 和 images。
 11. content 按换行分段渲染。
 12. images 按 sortOrder 排序，点击图片使用 wx.previewImage 预览。
 13. coverImage 为空或图片加载失败时使用本地默认图。
