@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/server/auth";
 import { prisma } from "@/lib/prisma";
 
-const VALID_KEYS = new Set(["home_hero_image"]);
+const VALID_KEYS = new Set(["home_hero_image", "home_hero_title", "home_hero_description"]);
+const MAX_LENGTHS: Record<string, number> = {
+  home_hero_title: 100,
+  home_hero_description: 300
+};
 
 export async function GET() {
   await requireAdmin();
@@ -29,6 +33,10 @@ export async function PUT(request: NextRequest) {
   for (const [key, value] of entries) {
     if (typeof value !== "string") {
       return NextResponse.json({ message: `${key} 的值必须是字符串` }, { status: 400 });
+    }
+    const maxLength = MAX_LENGTHS[key];
+    if (maxLength && value.length > maxLength) {
+      return NextResponse.json({ message: `${key} 不能超过 ${maxLength} 个字符` }, { status: 400 });
     }
   }
 
