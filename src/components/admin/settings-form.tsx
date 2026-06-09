@@ -2,7 +2,7 @@
 
 import { FormEvent, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Field, Input } from "@/components/ui/field";
+import { Field, Input, Textarea } from "@/components/ui/field";
 import { Toast } from "@/components/ui/toast";
 import { parseHeroImageConfig, resolveHeroImage, serializeHeroImageConfig } from "@/lib/hero-image";
 import type { HeroImageConfig } from "@/types/hero-image";
@@ -15,9 +15,13 @@ function formatBytes(bytes: number) {
 
 export function SettingsForm({
   homeHeroImage,
+  homeHeroTitle,
+  homeHeroDescription,
   fallbackImage
 }: {
   homeHeroImage: string;
+  homeHeroTitle: string;
+  homeHeroDescription: string;
   fallbackImage: string;
 }) {
   const initialHero = resolveHeroImage(homeHeroImage);
@@ -27,6 +31,8 @@ export function SettingsForm({
     parseHeroImageConfig(homeHeroImage)
   );
   const [previewUrl, setPreviewUrl] = useState(initialHero.src || fallbackImage);
+  const [heroTitle, setHeroTitle] = useState(homeHeroTitle);
+  const [heroDescription, setHeroDescription] = useState(homeHeroDescription);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -70,7 +76,11 @@ export function SettingsForm({
       const res = await fetch("/api/admin/site-config", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ home_hero_image: heroImageValue })
+        body: JSON.stringify({
+          home_hero_image: heroImageValue,
+          home_hero_title: heroTitle.trim(),
+          home_hero_description: heroDescription.trim()
+        })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "保存失败");
@@ -93,6 +103,24 @@ export function SettingsForm({
       ) : null}
       <form onSubmit={submit} className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
         <section className="grid gap-4 rounded-lg border border-susu-line bg-white p-4 shadow-card">
+          <Field label="Hero 标题" hint="留空则使用首页当前的默认标题，最多 100 个字符。">
+            <Textarea
+              value={heroTitle}
+              onChange={(e) => setHeroTitle(e.target.value)}
+              maxLength={100}
+              rows={3}
+              placeholder="把酥酥的每一个小小瞬间，放进一台温柔的时光机。"
+            />
+          </Field>
+          <Field label="Hero 描述" hint="显示在标题下方，留空则使用默认描述，最多 300 个字符。">
+            <Textarea
+              value={heroDescription}
+              onChange={(e) => setHeroDescription(e.target.value)}
+              maxLength={300}
+              rows={4}
+              placeholder="第一次认真搭城堡，第一次在草地上追泡泡，普通日常里闪亮的表情，都在这里按日期好好保存。"
+            />
+          </Field>
           <Field label="首页主图" hint="显示为首页首屏背景，支持输入外部 URL 或上传图片。留空则使用默认图片。">
             <Input
               value={heroImageUrl}
