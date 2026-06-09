@@ -6,7 +6,9 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminSettingsPage() {
   const configs = await prisma.siteConfig.findMany({
-    where: { key: { in: ["home_hero_image", "home_hero_title", "home_hero_description"] } }
+    where: {
+      key: { in: ["home_hero_image", "home_hero_title", "home_hero_description", "default_story_location"] }
+    }
   });
   const map: Record<string, string> = {};
   for (const c of configs) {
@@ -24,6 +26,7 @@ export default async function AdminSettingsPage() {
           homeHeroImage={map.home_hero_image || ""}
           homeHeroTitle={map.home_hero_title || ""}
           homeHeroDescription={map.home_hero_description || ""}
+          defaultStoryLocation={map.default_story_location || ""}
           fallbackImage="https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&w=1200&q=80"
         />
       </div>

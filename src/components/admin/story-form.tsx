@@ -10,7 +10,7 @@ import { inputDate } from "@/lib/dates";
 import { generateStoryDraft } from "@/lib/admin-api";
 import { EditableImage, UploadWidget } from "@/components/admin/upload-widget";
 
-export function StoryForm({ story }: { story?: StoryDTO }) {
+export function StoryForm({ story, defaultLocation = "" }: { story?: StoryDTO; defaultLocation?: string }) {
   const router = useRouter();
   const initialImages = useMemo<EditableImage[]>(
     () => story?.images.map((image, index) => ({ imageUrl: image.imageUrl, sortOrder: image.sortOrder ?? index })) || [],
@@ -20,6 +20,7 @@ export function StoryForm({ story }: { story?: StoryDTO }) {
   const [slug, setSlug] = useState(story?.slug || "");
   const [summary, setSummary] = useState(story?.summary || "");
   const [content, setContent] = useState(story?.content || "");
+  const [location, setLocation] = useState(story?.location || defaultLocation);
   const [storyDate, setStoryDate] = useState(story ? inputDate(story.storyDate) : inputDate(new Date()));
   const [tags, setTags] = useState(story?.tags.join("，") || "");
   const [coverImage, setCoverImage] = useState(story?.coverImage || "");
@@ -45,6 +46,7 @@ export function StoryForm({ story }: { story?: StoryDTO }) {
       slug: slug.trim() || undefined,
       summary,
       content,
+      location,
       storyDate,
       tags: tags.split(/[,，]/).map((tag) => tag.trim()).filter(Boolean),
       coverImage,
@@ -85,6 +87,7 @@ export function StoryForm({ story }: { story?: StoryDTO }) {
         title,
         summary,
         storyDate,
+        location,
         tags: tags.split(/[,，]/).map((tag) => tag.trim()).filter(Boolean),
         content,
         aiPrompt,
@@ -132,7 +135,7 @@ export function StoryForm({ story }: { story?: StoryDTO }) {
             <Button type="button" variant="secondary" onClick={handleGenerate} disabled={generating}>
               {generating ? "生成中..." : "让 AI 生成"}
             </Button>
-            <p className="text-sm text-susu-muted">会根据标题、摘要、日期、标签和已有正文生成，不会自动保存。</p>
+            <p className="text-sm text-susu-muted">会根据标题、摘要、日期、地点、标签和已有正文生成，不会自动保存。</p>
           </div>
         </section>
         <UploadWidget images={images} coverImage={coverImage} onImagesChange={setImages} onCoverChange={setCoverImage} />
@@ -150,6 +153,14 @@ export function StoryForm({ story }: { story?: StoryDTO }) {
             </Field>
             <Field label="故事日期">
               <Input type="date" value={storyDate} onChange={(event) => setStoryDate(event.target.value)} required />
+            </Field>
+            <Field label="地点" hint="新建故事时会自动带入站点设置中的默认地点。">
+              <Input
+                value={location}
+                onChange={(event) => setLocation(event.target.value)}
+                maxLength={120}
+                placeholder="例如：上海植物园"
+              />
             </Field>
             <Field label="标签" hint="用中文逗号或英文逗号分隔。">
               <Input value={tags} onChange={(event) => setTags(event.target.value)} placeholder="日常，成长，生日" />

@@ -7,6 +7,7 @@ const schema = z.object({
   title: z.string().max(80).optional().default(""),
   summary: z.string().max(240).optional().default(""),
   storyDate: z.string().optional().default(""),
+  location: z.string().max(120).optional().default(""),
   tags: z.array(z.string()).optional().default([]),
   content: z.string().optional().default(""),
   aiPrompt: z.string().max(500).optional().default(""),
@@ -32,6 +33,7 @@ export async function POST(request: NextRequest) {
     contentLength: payload.content.length,
     aiPromptLength: payload.aiPrompt.length,
     storyDate: payload.storyDate,
+    locationLength: payload.location.length,
     tagCount: payload.tags.length,
     imageCount: payload.imageUrls.length
   });

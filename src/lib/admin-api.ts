@@ -2,6 +2,7 @@ type GenerateStoryDraftPayload = {
   title: string;
   summary: string;
   storyDate: string;
+  location: string;
   tags: string[];
   content: string;
   aiPrompt: string;

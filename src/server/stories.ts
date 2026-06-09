@@ -11,6 +11,7 @@ export function serializeStory<T extends { tags: string; storyDate: Date; create
     slug: string | null;
     summary: string;
     content: string;
+    location: string;
     coverImage: string | null;
     images?: { id?: string; imageUrl: string; sortOrder: number; createdAt: Date }[];
   }
@@ -21,6 +22,7 @@ export function serializeStory<T extends { tags: string; storyDate: Date; create
     slug: story.slug,
     summary: story.summary,
     content: story.content,
+    location: story.location,
     coverImage: story.coverImage,
     tags: parseTags(story.tags),
     images: story.images?.map((image) => ({
@@ -91,6 +93,7 @@ export async function createStory(input: StoryInput) {
       slug: input.slug || null,
       summary: input.summary,
       content: input.content,
+      location: input.location,
       storyDate: new Date(input.storyDate),
       coverImage: input.coverImage || input.images[0]?.imageUrl || null,
       tags: normalizeTags(input.tags),
@@ -115,6 +118,7 @@ export async function updateStory(id: string, input: StoryInput) {
         slug: input.slug || null,
         summary: input.summary,
         content: input.content,
+        location: input.location,
         storyDate: new Date(input.storyDate),
         coverImage: input.coverImage || input.images[0]?.imageUrl || null,
         tags: normalizeTags(input.tags),

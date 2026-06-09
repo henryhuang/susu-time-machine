@@ -4,6 +4,7 @@ type GenerateStoryContentInput = {
   title: string;
   summary: string;
   storyDate: string;
+  location: string;
   tags: string[];
   content: string;
   aiPrompt: string;
@@ -54,6 +55,7 @@ function buildPrompt(input: GenerateStoryContentInput) {
     `标题：${input.title || "未填写"}`,
     `摘要：${input.summary || "未填写"}`,
     `故事日期：${input.storyDate || "未填写"}`,
+    `地点：${input.location || "未填写"}`,
     `标签：${input.tags.length > 0 ? input.tags.join("、") : "未填写"}`,
     `已有正文：${input.content || "无"}`,
     `我想表达的关键语句：${input.aiPrompt || "未填写"}`,

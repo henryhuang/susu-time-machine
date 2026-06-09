@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, MapPin } from "lucide-react";
 import { getImageUrl } from "@/lib/images";
 import { storyHref } from "@/lib/links";
 import { StoryDTO } from "@/types/story";
@@ -24,7 +24,15 @@ export function TimelineStoryEntry({ story, index }: { story: StoryDTO; index: n
         }`}
       >
         <div className="mb-4 flex items-center justify-between gap-4 border-b border-dashed border-[#e8c8be] pb-3">
-          <span className="font-mono text-xs tracking-[0.12em] text-[#9b7e75]">{dateLabel}</span>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#9b7e75]">
+            <span className="font-mono tracking-[0.12em]">{dateLabel}</span>
+            {story.location ? (
+              <span className="inline-flex items-center gap-1">
+                <MapPin className="h-3.5 w-3.5" />
+                {story.location}
+              </span>
+            ) : null}
+          </div>
           <span className="display-serif text-3xl leading-none text-peach-500">
             {String(index + 1).padStart(2, "0")}
           </span>

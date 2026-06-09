@@ -11,6 +11,7 @@ export type StoryDTO = {
   slug: string | null;
   summary: string;
   content: string;
+  location: string;
   coverImage: string | null;
   storyDate: string;
   tags: string[];
