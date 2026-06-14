@@ -279,6 +279,16 @@ TENCENT_COS_UPLOAD_PREFIX="susu/stories"
 - `BAIDU_ANALYTICS_ID`：百度统计站点代码中 `hm.js?` 后面的 ID。
 - 配置留空时，不会加载百度统计脚本。
 
+## 搜索引擎隐私配置
+
+网站默认不允许搜索引擎索引：
+
+- 页面元数据输出 `noindex`、`nofollow` 和 `noimageindex`。
+- `/robots.txt` 对所有爬虫返回全站禁止抓取规则。
+- 所有响应附带 `X-Robots-Tag`，覆盖页面、API 和图片资源。
+
+这些规则用于阻止合规搜索引擎收录，不能替代登录验证或访问控制。
+
 ## 微信公众号分享卡片
 
 故事详情页会在微信内通过公众号 JS-SDK 设置分享给朋友和朋友圈时使用的标题、摘要、封面及链接。生产环境请配置：
