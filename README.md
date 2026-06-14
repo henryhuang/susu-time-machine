@@ -258,6 +258,8 @@ QWEN_MODEL="qwen3.6-plus"
 AI_REQUEST_TIMEOUT_MS="45000"
 AI_MAX_IMAGE_INPUTS="3"
 
+BAIDU_ANALYTICS_ID=""
+
 WECHAT_PERSONAL_ASSET_APPID=""
 WECHAT_PERSONAL_ASSET_SECRET=""
 WECHAT_OFFICIAL_ACCOUNT_APP_ID=""
@@ -271,6 +273,11 @@ TENCENT_COS_REGION="ap-shanghai"
 TENCENT_COS_PUBLIC_BASE_URL=""
 TENCENT_COS_UPLOAD_PREFIX="susu/stories"
 ```
+
+百度统计仅加载在前台页面，不统计后台控制台和 API 请求：
+
+- `BAIDU_ANALYTICS_ID`：百度统计站点代码中 `hm.js?` 后面的 ID。
+- 配置留空时，不会加载百度统计脚本。
 
 ## 微信公众号分享卡片
 
@@ -449,6 +456,7 @@ DOCKER_DATABASE_URL="file:/app/data/app.db"
 AUTH_SECRET="replace-with-at-least-32-random-characters"
 ADMIN_USERNAME="admin"
 ADMIN_PASSWORD="your-strong-password"
+BAIDU_ANALYTICS_ID="your-baidu-site-id"
 
 TENCENT_COS_SECRET_ID="xxx"
 TENCENT_COS_SECRET_KEY="xxx"
