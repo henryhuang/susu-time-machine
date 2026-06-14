@@ -4,7 +4,8 @@ import { DeleteStoryButton } from "@/components/admin/delete-story-button";
 import { ProtectedAdmin } from "@/components/admin/protected-admin";
 import { ButtonLink } from "@/components/ui/button";
 import { Tag } from "@/components/ui/tag";
-import { formatDate } from "@/lib/dates";
+import { formatAgeAtDate, formatDate } from "@/lib/dates";
+import { getChildProfile } from "@/lib/child-profile";
 import { getImageUrl } from "@/lib/images";
 import { storyHref } from "@/lib/links";
 import { listStories } from "@/server/stories";
@@ -18,7 +19,10 @@ export default async function AdminStoriesPage({
 }) {
   const params = await searchParams;
   const page = Number(params.page || "1");
-  const stories = await listStories({ page, pageSize: 10, query: params.q, tag: params.tag });
+  const [stories, child] = await Promise.all([
+    listStories({ page, pageSize: 10, query: params.q, tag: params.tag }),
+    getChildProfile()
+  ]);
 
   return (
     <ProtectedAdmin>
@@ -26,7 +30,7 @@ export default async function AdminStoriesPage({
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="font-semibold text-peach-600">故事管理</p>
-            <h1 className="mt-2 text-2xl font-extrabold">管理酥酥的成长故事和照片</h1>
+            <h1 className="mt-2 text-2xl font-extrabold">管理{child.displayName}的成长故事和照片</h1>
             <p className="mt-2 text-susu-muted">支持搜索、编辑与删除。删除默认只删除数据库记录，不删除 COS 原图。</p>
           </div>
           <ButtonLink href="/admin/stories/new" variant="primary">
@@ -75,7 +79,10 @@ export default async function AdminStoriesPage({
                     创建：{formatDate(story.createdAt)} · 更新：{formatDate(story.updatedAt)}
                   </p>
                 </div>
-                <div className="text-sm text-susu-muted">{formatDate(story.storyDate)}</div>
+                <div className="text-sm text-susu-muted">
+                  <div>{formatDate(story.storyDate)}</div>
+                  {child.birthday ? <div className="mt-1 text-xs text-peach-600">{formatAgeAtDate(child.birthday, story.storyDate)}</div> : null}
+                </div>
                 <div className="flex flex-wrap content-start gap-2">
                   {story.tags.map((tag) => (
                     <Tag key={tag}>{tag}</Tag>

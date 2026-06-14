@@ -2,14 +2,14 @@ import Link from "next/link";
 import { ExternalLink, LayoutDashboard, LogOut, Plus, Settings, Upload, Rows3, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export function AdminShell({ children, username }: { children: React.ReactNode; username: string }) {
+export function AdminShell({ children, username, displayName }: { children: React.ReactNode; username: string; displayName: string }) {
   return (
     <div className="grid min-h-screen bg-susu-bg lg:grid-cols-[232px_1fr]">
       <aside className="hidden border-r border-susu-line bg-gradient-to-b from-white to-peach-50 px-4 py-6 lg:block">
         <Link href="/admin" className="flex items-center gap-3 px-2 pb-7">
           <span className="grid h-10 w-10 place-items-center rounded-lg bg-peach-500 font-bold text-white shadow-soft">酥</span>
           <span>
-            <span className="block font-bold">酥酥时光机后台</span>
+            <span className="block font-bold">{displayName}时光机后台</span>
             <span className="text-xs text-susu-muted">成长故事工作台</span>
           </span>
         </Link>
@@ -25,7 +25,7 @@ export function AdminShell({ children, username }: { children: React.ReactNode; 
       <div className="min-w-0">
         <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-susu-line bg-susu-bg/90 px-4 backdrop-blur sm:px-8">
           <div className="text-sm text-susu-muted">
-            酥酥时光机 / <strong className="text-susu-text">控制台</strong>
+            {displayName}时光机 / <strong className="text-susu-text">控制台</strong>
           </div>
           <div className="flex items-center gap-3">
             <Link href="/" className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-susu-muted transition hover:bg-peach-50 hover:text-peach-600">

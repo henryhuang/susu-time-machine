@@ -18,12 +18,22 @@ export function SettingsForm({
   homeHeroTitle,
   homeHeroDescription,
   defaultStoryLocation,
+  childName,
+  childNickname,
+  childDisplayName,
+  childBirthday,
+  childGender,
   fallbackImage
 }: {
   homeHeroImage: string;
   homeHeroTitle: string;
   homeHeroDescription: string;
   defaultStoryLocation: string;
+  childName: string;
+  childNickname: string;
+  childDisplayName: string;
+  childBirthday: string;
+  childGender: string;
   fallbackImage: string;
 }) {
   const initialHero = resolveHeroImage(homeHeroImage);
@@ -36,6 +46,11 @@ export function SettingsForm({
   const [heroTitle, setHeroTitle] = useState(homeHeroTitle);
   const [heroDescription, setHeroDescription] = useState(homeHeroDescription);
   const [storyLocation, setStoryLocation] = useState(defaultStoryLocation);
+  const [name, setName] = useState(childName);
+  const [nickname, setNickname] = useState(childNickname);
+  const [displayName, setDisplayName] = useState(childDisplayName);
+  const [birthday, setBirthday] = useState(childBirthday);
+  const [gender, setGender] = useState(childGender);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -83,7 +98,12 @@ export function SettingsForm({
           home_hero_image: heroImageValue,
           home_hero_title: heroTitle.trim(),
           home_hero_description: heroDescription.trim(),
-          default_story_location: storyLocation.trim()
+          default_story_location: storyLocation.trim(),
+          child_name: name.trim(),
+          child_nickname: nickname.trim(),
+          child_display_name: displayName.trim(),
+          child_birthday: birthday,
+          child_gender: gender
         })
       });
       const data = await res.json();
@@ -106,67 +126,108 @@ export function SettingsForm({
         />
       ) : null}
       <form onSubmit={submit} className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <section className="grid gap-4 rounded-lg border border-susu-line bg-white p-4 shadow-card">
-          <Field label="默认故事地点" hint="新建故事时自动填入，可在单个故事中修改或清空。">
-            <Input
-              value={storyLocation}
-              onChange={(e) => setStoryLocation(e.target.value)}
-              maxLength={120}
-              placeholder="例如：上海"
-            />
-          </Field>
-          <Field label="Hero 标题" hint="留空则使用首页当前的默认标题，最多 100 个字符。">
-            <Textarea
-              value={heroTitle}
-              onChange={(e) => setHeroTitle(e.target.value)}
-              maxLength={100}
-              rows={3}
-              placeholder="把酥酥的每一个小小瞬间，放进一台温柔的时光机。"
-            />
-          </Field>
-          <Field label="Hero 描述" hint="显示在标题下方，留空则使用默认描述，最多 300 个字符。">
-            <Textarea
-              value={heroDescription}
-              onChange={(e) => setHeroDescription(e.target.value)}
-              maxLength={300}
-              rows={4}
-              placeholder="第一次认真搭城堡，第一次在草地上追泡泡，普通日常里闪亮的表情，都在这里按日期好好保存。"
-            />
-          </Field>
-          <Field label="首页主图" hint="显示为首页首屏背景，支持输入外部 URL 或上传图片。留空则使用默认图片。">
-            <Input
-              value={heroImageUrl}
-              onChange={(e) => handleUrlChange(e.target.value)}
-              placeholder="输入图片 URL 或点击下方按钮上传"
-            />
-          </Field>
-          <div className="flex flex-wrap gap-3">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => inputRef.current?.click()}
-              disabled={uploading}
-            >
-              {uploading ? "上传中..." : "上传图片"}
-            </Button>
-            <input
-              ref={inputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              className="hidden"
-              onChange={(e) => upload(e.target.files)}
-            />
-            {heroImageValue ? (
+        <div className="grid gap-5">
+          <section className="grid gap-4 rounded-lg border border-susu-line bg-white p-4 shadow-card">
+            <div>
+              <h2 className="text-lg font-bold">小朋友资料</h2>
+              <p className="mt-1 text-sm text-susu-muted">生日用于计算每条成长记录发生时的准确年龄。</p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="姓名">
+                <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={50} placeholder="例如：苏小小" />
+              </Field>
+              <Field label="小名">
+                <Input value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={50} placeholder="例如：酥酥" />
+              </Field>
+              <Field label="全站点称呼" hint="用于站点标题和各处成长故事文案。">
+                <Input
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  maxLength={30}
+                  required
+                  placeholder="酥酥"
+                />
+              </Field>
+              <Field label="生日">
+                <Input type="date" value={birthday} onChange={(e) => setBirthday(e.target.value)} />
+              </Field>
+              <Field label="性别">
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                  className="h-11 rounded-lg border border-susu-line bg-white px-3 text-sm outline-none transition focus:border-peach-500 focus:ring-4 focus:ring-peach-100"
+                >
+                  <option value="">暂不填写</option>
+                  <option value="female">女</option>
+                  <option value="male">男</option>
+                  <option value="other">其他</option>
+                </select>
+              </Field>
+            </div>
+          </section>
+
+          <section className="grid gap-4 rounded-lg border border-susu-line bg-white p-4 shadow-card">
+            <div>
+              <h2 className="text-lg font-bold">首页与故事默认值</h2>
+              <p className="mt-1 text-sm text-susu-muted">管理首页文案、主图和新增故事时的默认地点。</p>
+            </div>
+            <Field label="默认故事地点" hint="新建故事时自动填入，可在单个故事中修改或清空。">
+              <Input
+                value={storyLocation}
+                onChange={(e) => setStoryLocation(e.target.value)}
+                maxLength={120}
+                placeholder="例如：上海"
+              />
+            </Field>
+            <Field label="Hero 标题" hint="留空则使用首页当前的默认标题，最多 100 个字符。">
+              <Textarea
+                value={heroTitle}
+                onChange={(e) => setHeroTitle(e.target.value)}
+                maxLength={100}
+                rows={3}
+                placeholder={`把${displayName || "酥酥"}的每一个小小瞬间，放进一台温柔的时光机。`}
+              />
+            </Field>
+            <Field label="Hero 描述" hint="显示在标题下方，留空则使用默认描述，最多 300 个字符。">
+              <Textarea
+                value={heroDescription}
+                onChange={(e) => setHeroDescription(e.target.value)}
+                maxLength={300}
+                rows={4}
+                placeholder="第一次认真搭城堡，第一次在草地上追泡泡，普通日常里闪亮的表情，都在这里按日期好好保存。"
+              />
+            </Field>
+            <Field label="首页主图" hint="显示为首页首屏背景，支持输入外部 URL 或上传图片。留空则使用默认图片。">
+              <Input
+                value={heroImageUrl}
+                onChange={(e) => handleUrlChange(e.target.value)}
+                placeholder="输入图片 URL 或点击下方按钮上传"
+              />
+            </Field>
+            <div className="flex flex-wrap gap-3">
               <Button
                 type="button"
-                variant="ghost"
-                onClick={() => handleUrlChange("")}
+                variant="secondary"
+                onClick={() => inputRef.current?.click()}
+                disabled={uploading}
               >
-                恢复默认
+                {uploading ? "上传中..." : "上传图片"}
               </Button>
-            ) : null}
-          </div>
-        </section>
+              <input
+                ref={inputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={(e) => upload(e.target.files)}
+              />
+              {heroImageValue ? (
+                <Button type="button" variant="ghost" onClick={() => handleUrlChange("")}>
+                  恢复默认
+                </Button>
+              ) : null}
+            </div>
+          </section>
+        </div>
 
         <aside className="grid content-start gap-5">
           <section className="rounded-lg border border-susu-line bg-white p-4 shadow-card">

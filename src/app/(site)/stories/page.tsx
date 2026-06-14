@@ -3,14 +3,16 @@ import { TimelineStoryEntry } from "@/components/site/timeline-story-entry";
 import { TimelineYearMenu } from "@/components/site/timeline-year-menu";
 import { absoluteUrl, getRequestSiteUrl } from "@/lib/site";
 import { listStories } from "@/server/stories";
+import { getChildProfile } from "@/lib/child-profile";
 
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const requestSiteUrl = await getRequestSiteUrl();
+  const [requestSiteUrl, child] = await Promise.all([getRequestSiteUrl(), getChildProfile()]);
+  const siteName = `${child.displayName}时光机`;
   const canonicalUrl = absoluteUrl("/stories", requestSiteUrl);
   const shareImage = absoluteUrl("/share/stories-logo.png", requestSiteUrl);
-  const description = "沿着时间轴，收藏酥酥慢慢长大的每一段故事。";
+  const description = `沿着时间轴，收藏${child.displayName}慢慢长大的每一段故事。`;
 
   return {
     title: "成长时间轴",
@@ -19,10 +21,10 @@ export async function generateMetadata(): Promise<Metadata> {
       canonical: canonicalUrl
     },
     openGraph: {
-      title: "成长时间轴 | 酥酥时光机",
+      title: `成长时间轴 | ${siteName}`,
       description,
       url: canonicalUrl,
-      siteName: "酥酥时光机",
+      siteName,
       locale: "zh_CN",
       type: "website",
       images: [
@@ -30,13 +32,13 @@ export async function generateMetadata(): Promise<Metadata> {
           url: shareImage,
           width: 1200,
           height: 630,
-          alt: "酥酥时光机"
+          alt: siteName
         }
       ]
     },
     twitter: {
       card: "summary_large_image",
-      title: "成长时间轴 | 酥酥时光机",
+      title: `成长时间轴 | ${siteName}`,
       description,
       images: [shareImage]
     },
@@ -50,7 +52,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function StoriesPage() {
-  const firstPage = await listStories({ page: 1, pageSize: 50 });
+  const [firstPage, child] = await Promise.all([
+    listStories({ page: 1, pageSize: 50 }),
+    getChildProfile()
+  ]);
   const allStories = [...firstPage.items];
 
   for (let page = 2; page <= Math.ceil(firstPage.total / firstPage.pageSize); page += 1) {
@@ -80,7 +85,7 @@ export default async function StoriesPage() {
               <h1 className="display-serif text-4xl font-semibold tracking-[0.08em] sm:text-5xl">成长时间轴</h1>
               <p className="display-serif mt-2 text-xl italic tracking-wide text-peach-500">Growth Timeline</p>
               <div className="my-5 w-44 border-t border-dashed border-peach-500" />
-              <p className="text-sm leading-7 text-susu-muted">新的故事在前，旧的故事在后。每一步，都是酥酥长大的脚印。</p>
+              <p className="text-sm leading-7 text-susu-muted">新的故事在前，旧的故事在后。每一步，都是{child.displayName}长大的脚印。</p>
             </div>
           </div>
 
@@ -99,6 +104,7 @@ export default async function StoriesPage() {
                       <TimelineStoryEntry
                         key={story.id}
                         story={story}
+                        birthday={child.birthday}
                         index={storyGroups
                           .slice(0, groupIndex)
                           .reduce((count, [, groupStories]) => count + groupStories.length, storyIndex)}

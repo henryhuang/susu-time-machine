@@ -10,7 +10,15 @@ import { inputDate } from "@/lib/dates";
 import { generateStoryDraft } from "@/lib/admin-api";
 import { EditableImage, UploadWidget } from "@/components/admin/upload-widget";
 
-export function StoryForm({ story, defaultLocation = "" }: { story?: StoryDTO; defaultLocation?: string }) {
+export function StoryForm({
+  story,
+  defaultLocation = "",
+  displayName
+}: {
+  story?: StoryDTO;
+  defaultLocation?: string;
+  displayName: string;
+}) {
   const router = useRouter();
   const initialImages = useMemo<EditableImage[]>(
     () => story?.images.map((image, index) => ({ imageUrl: image.imageUrl, sortOrder: image.sortOrder ?? index })) || [],
@@ -114,13 +122,13 @@ export function StoryForm({ story, defaultLocation = "" }: { story?: StoryDTO; d
         {error ? <div className="rounded-lg bg-[#fdecef] px-4 py-3 text-sm font-semibold text-susu-red">{error}</div> : null}
         <section className="grid gap-4 rounded-lg border border-susu-line bg-white p-4 shadow-card">
           <Field label="标题">
-            <Input value={title} onChange={(event) => setTitle(event.target.value)} required maxLength={80} placeholder="例如：酥酥搭了一座小城堡" />
+            <Input value={title} onChange={(event) => setTitle(event.target.value)} required maxLength={80} placeholder={`例如：${displayName}搭了一座小城堡`} />
           </Field>
           <Field label="摘要" hint="可选。只想记录标题和照片时可以留空。">
             <Textarea value={summary} onChange={(event) => setSummary(event.target.value)} maxLength={240} placeholder="用一两句话记住这个瞬间" />
           </Field>
           <Field label="正文" hint="可选。留空时详情页只展示标题和照片。">
-            <Textarea value={content} onChange={(event) => setContent(event.target.value)} className="min-h-64" placeholder="记录今天发生了什么，酥酥说了什么，或者这一刻为什么值得留下。" />
+            <Textarea value={content} onChange={(event) => setContent(event.target.value)} className="min-h-64" placeholder={`记录今天发生了什么，${displayName}说了什么，或者这一刻为什么值得留下。`} />
           </Field>
           <Field label="想表达的关键语句" hint="不会保存到数据库，只会在本次 AI 生成时作为写作方向。">
             <Textarea

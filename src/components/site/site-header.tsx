@@ -6,7 +6,7 @@ import { Menu, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
-export function SiteHeader() {
+export function SiteHeader({ displayName }: { displayName: string }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const isHome = pathname === "/";
@@ -29,7 +29,7 @@ export function SiteHeader() {
             />
           </span>
           <span className={lightText}>
-            <span className="display-serif block text-xl font-semibold leading-tight tracking-[0.08em] sm:text-2xl">酥酥时光机</span>
+            <span className="display-serif block text-xl font-semibold leading-tight tracking-[0.08em] sm:text-2xl">{displayName}时光机</span>
             <span className={`mt-1 block text-xs tracking-[0.2em] ${isHome ? "text-white/75" : "text-susu-muted"}`}>成长故事小书</span>
           </span>
         </Link>
