@@ -18,6 +18,16 @@ export async function generateMetadata(): Promise<Metadata> {
     creator: siteName,
     publisher: siteName,
     referrer: "origin-when-cross-origin",
+    robots: {
+      index: false,
+      follow: false,
+      nocache: true,
+      googleBot: {
+        index: false,
+        follow: false,
+        noimageindex: true
+      }
+    },
     alternates: { canonical: "/" },
     openGraph: {
       title: siteName,
