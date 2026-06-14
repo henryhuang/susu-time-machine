@@ -3,14 +3,15 @@ import { ButtonLink } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
 import { defaultHeroImage, resolveHeroImage } from "@/lib/hero-image";
 import { absoluteUrl, getRequestSiteUrl } from "@/lib/site";
+import { getChildProfile } from "@/lib/child-profile";
 
 export const dynamic = "force-dynamic";
 
-const defaultHeroTitle = "把酥酥的每一个小小瞬间，放进一台温柔的时光机。";
 const defaultHeroDescription = "第一次认真搭城堡，第一次在草地上追泡泡，普通日常里闪亮的表情，都在这里按日期好好保存。";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const requestSiteUrl = await getRequestSiteUrl();
+  const [requestSiteUrl, child] = await Promise.all([getRequestSiteUrl(), getChildProfile()]);
+  const siteName = `${child.displayName}时光机`;
   const canonicalUrl = absoluteUrl("/", requestSiteUrl);
   const heroConfig = await prisma.siteConfig.findUnique({ where: { key: "home_hero_image" } }).catch(() => null);
   const heroImage = resolveHeroImage(heroConfig?.value);
@@ -19,16 +20,16 @@ export async function generateMetadata(): Promise<Metadata> {
   const description = "那些小小的表情、第一次和普通日常，都值得被好好保存。";
 
   return {
-    title: "酥酥时光机",
+    title: siteName,
     description,
     alternates: {
       canonical: canonicalUrl
     },
     openGraph: {
-      title: "酥酥时光机",
+      title: siteName,
       description,
       url: canonicalUrl,
-      siteName: "酥酥时光机",
+      siteName,
       locale: "zh_CN",
       type: "website",
       images: [
@@ -36,13 +37,13 @@ export async function generateMetadata(): Promise<Metadata> {
           url: shareImage,
           width: 1200,
           height: 630,
-          alt: "酥酥时光机"
+          alt: siteName
         }
       ]
     },
     twitter: {
       card: "summary_large_image",
-      title: "酥酥时光机",
+      title: siteName,
       description,
       images: [shareImage]
     },
@@ -56,14 +57,17 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const configs = await prisma.siteConfig
-    .findMany({
-      where: { key: { in: ["home_hero_image", "home_hero_title", "home_hero_description"] } }
-    })
-    .catch(() => []);
+  const [configs, child] = await Promise.all([
+    prisma.siteConfig
+      .findMany({
+        where: { key: { in: ["home_hero_image", "home_hero_title", "home_hero_description"] } }
+      })
+      .catch(() => []),
+    getChildProfile()
+  ]);
   const config = Object.fromEntries(configs.map((item) => [item.key, item.value]));
   const heroImage = resolveHeroImage(config.home_hero_image || defaultHeroImage);
-  const heroTitle = config.home_hero_title?.trim() || defaultHeroTitle;
+  const heroTitle = config.home_hero_title?.trim() || `把${child.displayName}的每一个小小瞬间，放进一台温柔的时光机。`;
   const heroDescription = config.home_hero_description?.trim() || defaultHeroDescription;
   const heroSrcSet = heroImage.variants.map((variant) => `${variant.url} ${variant.width}w`).join(", ");
 
@@ -75,7 +79,7 @@ export default async function HomePage() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={heroImage.src}
-            alt={heroImage.alt}
+            alt={`${child.displayName}的成长照片`}
             width={heroImage.width}
             height={heroImage.height}
             loading="eager"

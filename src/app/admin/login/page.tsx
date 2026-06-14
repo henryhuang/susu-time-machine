@@ -2,11 +2,12 @@ import { redirect } from "next/navigation";
 import Image from "next/image";
 import { getCurrentAdmin } from "@/server/auth";
 import { LoginForm } from "@/components/admin/login-form";
+import { getChildProfile } from "@/lib/child-profile";
 
 export const dynamic = "force-dynamic";
 
 export default async function LoginPage() {
-  const admin = await getCurrentAdmin();
+  const [admin, child] = await Promise.all([getCurrentAdmin(), getChildProfile()]);
   if (admin) redirect("/admin");
 
   return (
@@ -25,7 +26,7 @@ export default async function LoginPage() {
             <div className="flex items-center gap-3">
               <span className="grid h-10 w-10 place-items-center rounded-lg bg-peach-500 font-bold text-white">酥</span>
               <div>
-                <div className="font-bold">酥酥时光机后台</div>
+                <div className="font-bold">{child.displayName}时光机后台</div>
                 <div className="text-sm text-susu-muted">成长故事管理端</div>
               </div>
             </div>
@@ -36,7 +37,7 @@ export default async function LoginPage() {
           <div className="mb-7">
             <div className="mb-5 grid h-12 w-12 place-items-center rounded-lg bg-peach-500 font-bold text-white shadow-soft">酥</div>
             <h1 className="text-3xl font-extrabold">登录后台</h1>
-            <p className="mt-2 text-susu-muted">管理酥酥的成长故事</p>
+            <p className="mt-2 text-susu-muted">管理{child.displayName}的成长故事</p>
           </div>
           <LoginForm />
         </div>

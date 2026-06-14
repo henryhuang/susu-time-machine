@@ -2,7 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { Images, Rows3, Users } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
-import { formatDate } from "@/lib/dates";
+import { formatAgeAtDate, formatDate } from "@/lib/dates";
+import { getChildProfile } from "@/lib/child-profile";
 import { getImageUrl } from "@/lib/images";
 import { resolveHeroImage } from "@/lib/hero-image";
 import { storyHref } from "@/lib/links";
@@ -15,12 +16,13 @@ export const dynamic = "force-dynamic";
 const defaultHeroImage = "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&w=640&q=80";
 
 export default async function AdminDashboardPage() {
-  const [totalStories, totalImages, allowedMiniUsers, recent, heroConfig] = await Promise.all([
+  const [totalStories, totalImages, allowedMiniUsers, recent, heroConfig, child] = await Promise.all([
     prisma.story.count(),
     prisma.storyImage.count(),
     prisma.miniProgramUser.count({ where: { allowed: true } }),
     listStories({ pageSize: 3 }),
-    prisma.siteConfig.findUnique({ where: { key: "home_hero_image" } }).catch(() => null)
+    prisma.siteConfig.findUnique({ where: { key: "home_hero_image" } }).catch(() => null),
+    getChildProfile()
   ]);
   const heroImage = resolveHeroImage(heroConfig?.value || defaultHeroImage);
 
@@ -30,7 +32,7 @@ export default async function AdminDashboardPage() {
       <section className="grid gap-5 rounded-lg border border-susu-line bg-white p-5 shadow-card lg:grid-cols-[1fr_260px]">
         <div>
           <p className="font-semibold text-peach-600">欢迎回来</p>
-          <h1 className="mt-2 text-2xl font-extrabold">今天也来记录酥酥的成长吧</h1>
+          <h1 className="mt-2 text-2xl font-extrabold">今天也来记录{child.displayName}的成长吧</h1>
           <p className="mt-3 max-w-2xl text-susu-muted">把照片、日期和一句小故事整理好，时间轴会慢慢变成一本温柔的小书。</p>
           <div className="mt-5 flex flex-wrap gap-3">
             <ButtonLink href="/admin/stories/new" variant="primary">
@@ -66,6 +68,7 @@ export default async function AdminDashboardPage() {
               <div className="min-w-0">
                 <div className="truncate font-bold">{story.title}</div>
                 <div className="text-sm text-susu-muted">{formatDate(story.storyDate)}</div>
+                {child.birthday ? <div className="text-xs text-peach-600">{formatAgeAtDate(child.birthday, story.storyDate)}</div> : null}
               </div>
             </Link>
           ))}

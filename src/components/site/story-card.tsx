@@ -1,14 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { formatDate } from "@/lib/dates";
+import { formatAgeAtDate, formatDate } from "@/lib/dates";
 import { getImageUrl } from "@/lib/images";
 import { storyHref } from "@/lib/links";
 import { StoryDTO } from "@/types/story";
 import { Tag } from "@/components/ui/tag";
 
-export function StoryCard({ story, compact = false }: { story: StoryDTO; compact?: boolean }) {
+export function StoryCard({ story, compact = false, birthday = "" }: { story: StoryDTO; compact?: boolean; birthday?: string }) {
   const href = storyHref(story);
+  const age = birthday ? formatAgeAtDate(birthday, story.storyDate) : "";
 
   if (compact) {
     return (
@@ -24,6 +25,7 @@ export function StoryCard({ story, compact = false }: { story: StoryDTO; compact
         </Link>
         <div className="mt-4 border-b border-susu-line pb-5">
           <div className="display-serif text-2xl tracking-wide">{formatShortDate(story.storyDate)}</div>
+          {age ? <div className="mt-1 text-xs font-semibold text-peach-600">{age}</div> : null}
           <Link href={href} className="mt-2 block text-lg font-semibold transition hover:text-peach-600">
             {story.title}
           </Link>
@@ -49,6 +51,7 @@ export function StoryCard({ story, compact = false }: { story: StoryDTO; compact
       </Link>
       <div className="flex min-w-0 flex-col justify-center">
         <div className="text-xs font-semibold uppercase tracking-[0.18em] text-peach-600">{formatDate(story.storyDate)}</div>
+        {age ? <div className="mt-1 text-xs font-semibold text-peach-600">{age}</div> : null}
         <Link href={href} className="display-serif mt-2 text-2xl font-semibold leading-tight transition hover:text-peach-600 sm:text-3xl">
           {story.title}
         </Link>

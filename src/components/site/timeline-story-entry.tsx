@@ -4,8 +4,9 @@ import { ArrowRight, MapPin } from "lucide-react";
 import { getImageUrl } from "@/lib/images";
 import { storyHref } from "@/lib/links";
 import { StoryDTO } from "@/types/story";
+import { formatAgeAtDate } from "@/lib/dates";
 
-export function TimelineStoryEntry({ story, index }: { story: StoryDTO; index: number }) {
+export function TimelineStoryEntry({ story, index, birthday }: { story: StoryDTO; index: number; birthday: string }) {
   const date = new Date(story.storyDate);
   const href = storyHref(story);
   const dateLabel = [
@@ -14,6 +15,7 @@ export function TimelineStoryEntry({ story, index }: { story: StoryDTO; index: n
     String(date.getDate()).padStart(2, "0")
   ].join(" / ");
   const isRight = index % 2 === 0;
+  const age = birthday ? formatAgeAtDate(birthday, story.storyDate) : "";
 
   return (
     <article className="group relative grid pb-16 sm:pb-20 lg:grid-cols-2 lg:pb-24">
@@ -26,6 +28,7 @@ export function TimelineStoryEntry({ story, index }: { story: StoryDTO; index: n
         <div className="mb-4 flex items-center justify-between gap-4 border-b border-dashed border-[#e8c8be] pb-3">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#9b7e75]">
             <span className="font-mono tracking-[0.12em]">{dateLabel}</span>
+            {age ? <span className="font-semibold text-peach-600">{age}</span> : null}
             {story.location ? (
               <span className="inline-flex items-center gap-1">
                 <MapPin className="h-3.5 w-3.5" />

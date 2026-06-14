@@ -5,7 +5,8 @@ import { notFound } from "next/navigation";
 import { ImagePreview } from "@/components/site/image-preview";
 import { Tag } from "@/components/ui/tag";
 import { WechatShareButton } from "@/components/site/wechat-share-button";
-import { formatDate } from "@/lib/dates";
+import { formatAgeAtDate, formatDate } from "@/lib/dates";
+import { getChildProfile } from "@/lib/child-profile";
 import { getImageUrl } from "@/lib/images";
 import { storyHref } from "@/lib/links";
 import { absoluteUrl, getRequestSiteUrl } from "@/lib/site";
@@ -15,21 +16,22 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ idOrSlug: string }> }): Promise<Metadata> {
   const { idOrSlug } = await params;
-  const story = await getStory(idOrSlug);
+  const [story, child] = await Promise.all([getStory(idOrSlug), getChildProfile()]);
   if (!story) return {};
 
   const requestSiteUrl = await getRequestSiteUrl();
   const canonicalPath = storyHref(story);
   const canonicalUrl = absoluteUrl(canonicalPath, requestSiteUrl);
   const coverImage = absoluteUrl(getImageUrl(story.coverImage), requestSiteUrl);
-  const description = story.summary || `${story.title} - 酥酥的成长故事`;
+  const siteName = `${child.displayName}时光机`;
+  const description = story.summary || `${story.title} - ${child.displayName}的成长故事`;
 
   return {
     title: story.title,
     description,
-    authors: [{ name: "酥酥时光机", url: absoluteUrl("/", requestSiteUrl) }],
+    authors: [{ name: siteName, url: absoluteUrl("/", requestSiteUrl) }],
     category: "成长故事",
-    keywords: ["酥酥时光机", "成长故事", ...story.tags],
+    keywords: [siteName, "成长故事", ...story.tags],
     alternates: {
       canonical: canonicalUrl
     },
@@ -37,7 +39,7 @@ export async function generateMetadata({ params }: { params: Promise<{ idOrSlug:
       title: story.title,
       description,
       url: canonicalUrl,
-      siteName: "酥酥时光机",
+      siteName,
       locale: "zh_CN",
       type: "article",
       publishedTime: story.createdAt,
@@ -46,7 +48,7 @@ export async function generateMetadata({ params }: { params: Promise<{ idOrSlug:
       images: [
         {
           url: coverImage,
-          alt: `${story.title} - 酥酥时光机`
+          alt: `${story.title} - ${siteName}`
         }
       ]
     },
@@ -64,13 +66,14 @@ export async function generateMetadata({ params }: { params: Promise<{ idOrSlug:
 
 export default async function StoryDetailPage({ params }: { params: Promise<{ idOrSlug: string }> }) {
   const { idOrSlug } = await params;
-  const story = await getStory(idOrSlug);
+  const [story, child] = await Promise.all([getStory(idOrSlug), getChildProfile()]);
   if (!story) notFound();
 
   const requestSiteUrl = await getRequestSiteUrl();
   const shareUrl = absoluteUrl(storyHref(story), requestSiteUrl);
   const shareImage = absoluteUrl(getImageUrl(story.coverImage), requestSiteUrl);
   const paragraphs = story.content.split(/\n+/).filter(Boolean);
+  const age = child.birthday ? formatAgeAtDate(child.birthday, story.storyDate) : "";
 
   return (
     <main className="bg-white pb-20">
@@ -78,6 +81,7 @@ export default async function StoryDetailPage({ params }: { params: Promise<{ id
         <header className="mx-auto max-w-4xl px-5 pb-10 pt-14 text-center sm:px-8 sm:pb-14 sm:pt-20">
           <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-xs font-semibold uppercase tracking-[0.2em] text-peach-600">
             <span>{formatDate(story.storyDate)}</span>
+            {age ? <span>{age}</span> : null}
             {story.location ? (
               <span className="inline-flex items-center gap-1 normal-case tracking-normal text-susu-muted">
                 <MapPin className="h-3.5 w-3.5" />
@@ -94,7 +98,7 @@ export default async function StoryDetailPage({ params }: { params: Promise<{ id
           </div>
           <WechatShareButton
             title={story.title}
-            summary={story.summary || `${story.title} - 酥酥的成长故事`}
+            summary={story.summary || `${story.title} - ${child.displayName}的成长故事`}
             imageUrl={shareImage}
             shareUrl={shareUrl}
           />
