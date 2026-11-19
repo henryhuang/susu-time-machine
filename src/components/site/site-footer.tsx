@@ -1,7 +1,27 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { ArrowRight } from "lucide-react";
+import styles from "./home.module.css";
 
 export function SiteFooter({ displayName }: { displayName: string }) {
+  const pathname = usePathname();
+
+  if (pathname === "/") {
+    return (
+      <footer className={styles.footer}>
+        <div className={`${styles.container} ${styles.footerInner}`}>
+          <span className={styles.footerBrand}>{displayName}时光机</span>
+          <Link href="/admin" className={styles.textLink}>
+            后台管理 <ArrowRight aria-hidden="true" size={15} />
+          </Link>
+        </div>
+      </footer>
+    );
+  }
+
   return (
     <footer className="bg-[#211f1c] text-white">
       <div className="mx-auto flex max-w-[1440px] flex-col gap-3 px-5 py-10 sm:flex-row sm:items-end sm:justify-between sm:px-8 lg:px-14">
