@@ -3,9 +3,16 @@
 import { CalendarDays, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-export function TimelineYearMenu({ years }: { years: string[] }) {
+export function TimelineYearMenu({ years, initialYear }: { years: string[]; initialYear?: string }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!initialYear) return;
+    // The timeline can stream in after the browser first resolves the hash.
+    const id = `year-${initialYear}`;
+    document.getElementById(id)?.scrollIntoView({ behavior: "instant", block: "start" });
+  }, [initialYear]);
 
   useEffect(() => {
     if (!open) return;

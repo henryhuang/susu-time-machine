@@ -1,13 +1,18 @@
 import type { Metadata } from "next";
-import { ButtonLink } from "@/components/ui/button";
+import Link from "next/link";
+import Image from "next/image";
+import { ArrowRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { defaultHeroImage, resolveHeroImage } from "@/lib/hero-image";
+import { resolveHeroImage } from "@/lib/hero-image";
 import { absoluteUrl, getRequestSiteUrl } from "@/lib/site";
 import { getChildProfile } from "@/lib/child-profile";
+import { formatAgeAtDate } from "@/lib/dates";
+import { storyHref } from "@/lib/links";
+import { listStories } from "@/server/stories";
+import type { StoryDTO } from "@/types/story";
+import styles from "@/components/site/home.module.css";
 
 export const dynamic = "force-dynamic";
-
-const defaultHeroDescription = "第一次认真搭城堡，第一次在草地上追泡泡，普通日常里闪亮的表情，都在这里按日期好好保存。";
 
 export async function generateMetadata(): Promise<Metadata> {
   const [requestSiteUrl, child] = await Promise.all([getRequestSiteUrl(), getChildProfile()]);
@@ -56,68 +61,135 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+const defaultBirthday = "2021-11-22";
+
+function storyCover(story: StoryDTO) {
+  return story.coverImage?.trim() || story.images.find((image) => image.imageUrl.trim())?.imageUrl.trim();
+}
+
+function StoryPreview({ story, featured }: { story: StoryDTO; featured: boolean }) {
+  const cover = storyCover(story);
+  const date = story.storyDate.slice(0, 10);
+  const summary = story.summary.trim();
+
+  return (
+    <article className={styles.story}>
+      <Link href={storyHref(story)} className={styles.storyLink}>
+        {cover ? (
+          <div className={styles.storyPhoto}>
+            <Image src={cover} alt="" fill loading="lazy" />
+          </div>
+        ) : null}
+        <div className={styles.storyText}>
+          <time dateTime={date}>{date.replaceAll("-", ".")}</time>
+          <h3>{story.title}</h3>
+          {featured && summary && summary !== story.title.trim() ? <p>{summary}</p> : null}
+          {featured ? <ArrowRight className={styles.storyArrow} size={18} aria-hidden="true" /> : null}
+        </div>
+      </Link>
+    </article>
+  );
+}
+
 export default async function HomePage() {
-  const [configs, child] = await Promise.all([
+  const [configs, child, recent] = await Promise.all([
     prisma.siteConfig
       .findMany({
         where: { key: { in: ["home_hero_image", "home_hero_title", "home_hero_description"] } }
       })
       .catch(() => []),
-    getChildProfile()
+    getChildProfile(),
+    listStories({ page: 1, pageSize: 6 })
   ]);
   const config = Object.fromEntries(configs.map((item) => [item.key, item.value]));
-  const heroImage = resolveHeroImage(config.home_hero_image || defaultHeroImage);
-  const heroTitle = config.home_hero_title?.trim() || `把${child.displayName}的每一个小小瞬间，放进一台温柔的时光机。`;
-  const heroDescription = config.home_hero_description?.trim() || defaultHeroDescription;
-  const heroSrcSet = heroImage.variants.map((variant) => `${variant.url} ${variant.width}w`).join(", ");
+  const heroSource = config.home_hero_image?.trim() || recent.items.map(storyCover).find(Boolean);
+  const heroImage = heroSource ? resolveHeroImage(heroSource) : null;
+  const heroSrcSet = heroImage?.variants.map((variant) => `${variant.url} ${variant.width}w`).join(", ");
+  const heroTitle = config.home_hero_title?.trim() || `记录${child.displayName}的成长`;
+  const heroDescription = config.home_hero_description?.trim();
+  const birthday = child.birthday || defaultBirthday;
+  const currentYear = Number(new Intl.DateTimeFormat("en", { year: "numeric", timeZone: "Asia/Shanghai" }).format());
+  const firstYear = 2021;
+  const years = Array.from({ length: currentYear - firstYear + 1 }, (_, index) => firstYear + index);
+  const storyRows = [recent.items.slice(0, 1), recent.items.slice(1, 3), recent.items.slice(3)];
 
   return (
-    <main className="bg-white">
-      <section className="relative flex min-h-screen min-h-[100svh] items-end overflow-hidden bg-[#25221d]">
-        <picture className="absolute inset-0">
-          {heroSrcSet ? <source type="image/webp" srcSet={heroSrcSet} sizes="100vw" /> : null}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={heroImage.src}
-            alt={`${child.displayName}的成长照片`}
-            width={heroImage.width}
-            height={heroImage.height}
-            loading="eager"
-            decoding="async"
-            fetchPriority="high"
-            className="h-full w-full object-cover object-center"
-          />
-        </picture>
-        <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/25 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10" />
-        <div className="relative mx-auto w-full max-w-[1440px] px-5 pb-14 text-white sm:px-8 sm:pb-20 lg:px-14 lg:pb-24">
-          <div className="relative z-10 max-w-[calc(100%-5.5rem)] sm:max-w-[calc(100%-8rem)] lg:max-w-3xl">
-            <h1 className="display-serif text-balance text-4xl font-semibold leading-[1.35] tracking-[0.03em] sm:text-5xl lg:text-6xl">
-              {heroTitle}
-            </h1>
-            <p className="mt-5 max-w-xl text-sm leading-7 text-white/72 sm:text-base">
-              {heroDescription}
-            </p>
-            <div className="mt-8 flex flex-wrap gap-4">
-              <ButtonLink href="/stories" variant="primary" size="lg" className="min-w-44">
-                成长时间轴
-              </ButtonLink>
-              <ButtonLink href="/admin/stories/new" variant="outlineLight" size="lg" className="min-w-40">
-                记录新故事
-              </ButtonLink>
-            </div>
-          </div>
-          <div className="xiaoya-companion pointer-events-none absolute bottom-0 right-1 z-0 w-[116px] sm:right-6 sm:w-[150px] lg:right-12 lg:w-[188px]" aria-hidden="true">
-            <div className="absolute bottom-2 left-1/2 h-8 w-[82%] -translate-x-1/2 rounded-full bg-[#f7c8c2]/45 blur-xl" />
+    <main className={styles.main}>
+      <section className={styles.hero} aria-labelledby="home-title">
+        {heroImage ? (
+          <picture className={styles.heroPhoto}>
+            {heroSrcSet ? (
+              <source type="image/webp" srcSet={heroSrcSet} sizes="100vw" />
+            ) : null}
             <img
-              src="/characters/xiaoya-loop.gif"
-              alt=""
-              width="360"
-              height="450"
-              className="relative h-auto w-full drop-shadow-[0_12px_18px_rgba(0,0,0,0.28)]"
+              src={heroImage.src}
+              alt={heroImage.config ? heroImage.alt : `${child.displayName}的成长照片`}
+              width={heroImage.width}
+              height={heroImage.height}
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
             />
+          </picture>
+        ) : null}
+        <div className={`${styles.container} ${styles.heroInner}`}>
+          <div className={styles.heroCaption}>
+            <p className={styles.masthead} lang="en">
+              Susu<br /> Time<br /> Machine
+            </p>
+            <h1 id="home-title" className={styles.heroTitle}>{heroTitle}</h1>
+            <p className={styles.heroDate}>从 <time dateTime={birthday}>{birthday.replaceAll("-", ".")}</time> 开始</p>
+            {heroDescription ? <p className={styles.heroDescription}>{heroDescription}</p> : null}
           </div>
         </div>
+      </section>
+
+      <section id="recent-stories" className={`${styles.container} ${styles.recent}`} aria-labelledby="recent-title">
+        <div className={styles.sectionHeading}>
+          <h2 id="recent-title">最近的故事</h2>
+          <Link href="/stories" className={styles.textLink}>
+            查看全部 <ArrowRight aria-hidden="true" size={15} />
+          </Link>
+        </div>
+        {recent.items.length ? (
+          <div className={styles.storyGrid}>
+            {storyRows.filter((row) => row.length).map((row, index) => (
+              <div className={styles.storyRow} key={index}>
+                {row.map((story) => <StoryPreview key={story.id} story={story} featured={index < 2} />)}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className={styles.empty}>还没有故事。</p>
+        )}
+      </section>
+
+      <section className={`${styles.container} ${styles.timeline}`} aria-labelledby="home-timeline">
+        <div className={styles.timelineHeading}>
+          <h2 id="home-timeline">成长时间轴</h2>
+          <p>按年份回顾{child.displayName}的成长足迹</p>
+        </div>
+        <ul className={styles.yearList}>
+          {years.map((year) => {
+            // Each tick describes the birthday reached by the end of that calendar year.
+            const age = formatAgeAtDate(birthday, `${year}-12-31`).split("岁")[0];
+            return (
+              <li key={year}>
+                <Link
+                  href={`/stories?year=${year}#year-${year}`}
+                  aria-current={year === currentYear ? "date" : undefined}
+                  className={styles.yearLink}
+                >
+                  <span>{year}</span>
+                  {age ? <small>{age}岁</small> : null}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+        <Link href="/stories" className={styles.timelineLink} aria-label="查看成长时间轴">
+          <ArrowRight aria-hidden="true" size={18} />
+        </Link>
       </section>
     </main>
   );

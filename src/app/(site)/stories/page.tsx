@@ -51,10 +51,15 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function StoriesPage() {
-  const [firstPage, child] = await Promise.all([
+export default async function StoriesPage({
+  searchParams
+}: {
+  searchParams: Promise<{ year?: string | string[] }>;
+}) {
+  const [firstPage, child, { year: requestedYear }] = await Promise.all([
     listStories({ page: 1, pageSize: 50 }),
-    getChildProfile()
+    getChildProfile(),
+    searchParams
   ]);
   const allStories = [...firstPage.items];
 
@@ -67,13 +72,17 @@ export default async function StoriesPage() {
     const dateDifference = new Date(b.storyDate).getTime() - new Date(a.storyDate).getTime();
     return dateDifference || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
-  const storyGroups = Object.entries(
-    sortedStories.reduce<Record<string, typeof sortedStories>>((groups, story) => {
-      const year = String(new Date(story.storyDate).getFullYear());
-      groups[year] = [...(groups[year] || []), story];
-      return groups;
-    }, {})
-  ).sort(([yearA], [yearB]) => Number(yearB) - Number(yearA));
+  const groups = sortedStories.reduce<Record<string, typeof sortedStories>>((groups, story) => {
+    const year = String(new Date(story.storyDate).getFullYear());
+    groups[year] = [...(groups[year] || []), story];
+    return groups;
+  }, {});
+  const initialYear = typeof requestedYear === "string" && /^[1-9]\d{3}$/.test(requestedYear) ? requestedYear : undefined;
+  // A homepage year link also needs a destination when that year has no stories.
+  if (initialYear) {
+    groups[initialYear] ??= [];
+  }
+  const storyGroups = Object.entries(groups).sort(([yearA], [yearB]) => Number(yearB) - Number(yearA));
   const years = storyGroups.map(([year]) => year);
 
   return (
@@ -100,6 +109,11 @@ export default async function StoriesPage() {
                     </h2>
                   </div>
                   <div>
+                    {yearStories.length === 0 ? (
+                      <p className="mb-10 ml-6 text-sm text-susu-muted lg:ml-[calc(50%+26px)]">
+                        这一年还没有故事。
+                      </p>
+                    ) : null}
                     {yearStories.map((story, storyIndex) => (
                       <TimelineStoryEntry
                         key={story.id}
@@ -121,7 +135,7 @@ export default async function StoriesPage() {
           )}
         </div>
       </section>
-      <TimelineYearMenu years={years} />
+      <TimelineYearMenu years={years} initialYear={initialYear} />
     </main>
   );
 }
