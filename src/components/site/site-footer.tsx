@@ -9,7 +9,7 @@ import styles from "./home.module.css";
 export function SiteFooter({ displayName }: { displayName: string }) {
   const pathname = usePathname();
 
-  if (pathname === "/") {
+  if (pathname === "/" || pathname === "/stories") {
     return (
       <footer className={styles.footer}>
         <div className={`${styles.container} ${styles.footerInner}`}>
