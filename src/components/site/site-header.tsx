@@ -15,11 +15,11 @@ const navigation = [
 export function SiteHeader({ displayName }: { displayName: string }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const isHome = pathname === "/";
+  const usesEditorialLayout = pathname === "/" || pathname === "/stories";
   const menuId = useId();
   const menuButton = useRef<HTMLButtonElement>(null);
 
-  if (isHome) {
+  if (usesEditorialLayout) {
     const navLinks = [
       navigation[0],
       { href: "/stories", label: "时间轴" },

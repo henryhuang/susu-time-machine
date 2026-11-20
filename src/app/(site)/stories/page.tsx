@@ -1,11 +1,25 @@
 import type { Metadata } from "next";
 import { TimelineStoryEntry } from "@/components/site/timeline-story-entry";
-import { TimelineYearMenu } from "@/components/site/timeline-year-menu";
+import { TimelineYearNavigation } from "@/components/site/timeline-year-navigation";
+import home from "@/components/site/home.module.css";
 import { absoluteUrl, getRequestSiteUrl } from "@/lib/site";
 import { listStories } from "@/server/stories";
 import { getChildProfile } from "@/lib/child-profile";
+import { formatAgeAtDate } from "@/lib/dates";
+import styles from "./timeline.module.css";
 
 export const dynamic = "force-dynamic";
+
+const defaultBirthday = "2021-11-22";
+
+function yearAgeLabel(birthday: string, year: string) {
+  const end = formatAgeAtDate(birthday, `${year}-12-31`).split("岁")[0];
+  if (!end) return "";
+
+  const start = formatAgeAtDate(birthday, `${year}-01-01`).split("岁")[0];
+  const range = start && start !== end ? `${start}—${end}` : end;
+  return `${range} ${range === "1" ? "YEAR" : "YEARS"} OLD`;
+}
 
 export async function generateMetadata(): Promise<Metadata> {
   const [requestSiteUrl, child] = await Promise.all([getRequestSiteUrl(), getChildProfile()]);
@@ -73,8 +87,8 @@ export default async function StoriesPage({
     return dateDifference || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
   const groups = sortedStories.reduce<Record<string, typeof sortedStories>>((groups, story) => {
-    const year = String(new Date(story.storyDate).getFullYear());
-    groups[year] = [...(groups[year] || []), story];
+    const year = story.storyDate.slice(0, 4);
+    (groups[year] ??= []).push(story);
     return groups;
   }, {});
   const initialYear = typeof requestedYear === "string" && /^[1-9]\d{3}$/.test(requestedYear) ? requestedYear : undefined;
@@ -83,59 +97,56 @@ export default async function StoriesPage({
     groups[initialYear] ??= [];
   }
   const storyGroups = Object.entries(groups).sort(([yearA], [yearB]) => Number(yearB) - Number(yearA));
-  const years = storyGroups.map(([year]) => year);
+  const years = storyGroups.filter(([, stories]) => stories.length).map(([year]) => year);
+  const birthday = child.birthday || defaultBirthday;
 
   return (
-    <main className="bg-[#fffaf5]">
-      <section className="mx-auto max-w-6xl px-5 pb-12 pt-10 sm:px-8 sm:pt-14">
-        <div className="relative">
-          <div className="mb-12 max-w-sm lg:absolute lg:left-0 lg:top-2 lg:mb-0">
-            <div>
-              <h1 className="display-serif text-4xl font-semibold tracking-[0.08em] sm:text-5xl">成长时间轴</h1>
-              <p className="display-serif mt-2 text-xl italic tracking-wide text-peach-500">Growth Timeline</p>
-              <div className="my-5 w-44 border-t border-dashed border-peach-500" />
-              <p className="text-sm leading-7 text-susu-muted">新的故事在前，旧的故事在后。每一步，都是{child.displayName}长大的脚印。</p>
-            </div>
-          </div>
-
-          {storyGroups.length > 0 ? (
-            <div className="relative lg:pt-6">
-              <div className="absolute bottom-0 left-0 top-0 w-px bg-peach-500 lg:left-1/2 lg:-translate-x-1/2" />
-              {storyGroups.map(([year, yearStories], groupIndex) => (
-                <section id={`year-${year}`} key={year} className="scroll-mt-28">
-                  <div className="relative z-10 mb-10 flex lg:justify-center">
-                    <h2 className="display-serif ml-6 border border-[#e7d5c7] bg-[#f6ead9] px-5 py-1.5 text-2xl tracking-[0.1em] text-[#6d4e43] shadow-soft lg:ml-0">
-                      {year}
-                    </h2>
-                  </div>
-                  <div>
-                    {yearStories.length === 0 ? (
-                      <p className="mb-10 ml-6 text-sm text-susu-muted lg:ml-[calc(50%+26px)]">
-                        这一年还没有故事。
-                      </p>
-                    ) : null}
-                    {yearStories.map((story, storyIndex) => (
-                      <TimelineStoryEntry
-                        key={story.id}
-                        story={story}
-                        birthday={child.birthday}
-                        index={storyGroups
-                          .slice(0, groupIndex)
-                          .reduce((count, [, groupStories]) => count + groupStories.length, storyIndex)}
-                      />
-                    ))}
-                  </div>
-                </section>
-              ))}
-            </div>
-          ) : (
-            <div className="border-y border-[#eee4df] py-20 text-center text-susu-muted">
-              时间轴还空着，第一条故事很快就会来到这里。
-            </div>
-          )}
+    <main className={`${home.main} ${styles.main}`}>
+      <header className={`${home.container} ${styles.pageHeader}`}>
+        <h1>成长时间轴</h1>
+        <div className={styles.masthead} lang="en">
+          <p>Growth Timeline</p>
+          <p>{birthday.slice(0, 4)} — Present</p>
         </div>
-      </section>
-      <TimelineYearMenu years={years} initialYear={initialYear} />
+      </header>
+      <TimelineYearNavigation years={years} initialYear={initialYear} />
+      <div className={`${home.container} ${styles.chapters}`}>
+        {storyGroups.map(([year, yearStories]) => {
+          const age = yearAgeLabel(birthday, year);
+          return (
+            <section
+              id={`year-${year}`}
+              key={year}
+              className={styles.chapter}
+              data-timeline-year={year}
+              aria-labelledby={`heading-${year}`}
+            >
+              <header className={styles.chapterHeader}>
+                <h2 id={`heading-${year}`} tabIndex={-1}>{year}</h2>
+                {age ? <p lang="en">{age}</p> : null}
+              </header>
+              {yearStories.length ? (
+                <div className={styles.grid}>
+                  {yearStories.map((story, index) => (
+                    <TimelineStoryEntry
+                      key={story.id}
+                      story={story}
+                      birthday={birthday}
+                      featured={index === 0}
+                      eager={index === 0 && year === (initialYear ?? years[0])}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className={home.empty}>这一年还没有故事。</p>
+              )}
+            </section>
+          );
+        })}
+        {storyGroups.length === 0 ? (
+          <p className={`${home.empty} ${styles.empty}`}>时间轴还空着，第一条故事很快就会来到这里。</p>
+        ) : null}
+      </div>
     </main>
   );
 }
