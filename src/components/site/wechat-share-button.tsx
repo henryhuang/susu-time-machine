@@ -10,6 +10,7 @@ type WechatShareButtonProps = {
   summary: string;
   imageUrl: string;
   shareUrl: string;
+  className?: string;
 };
 
 type WechatJsSdkConfig = {
@@ -65,7 +66,7 @@ function loadWechatJsSdk() {
   });
 }
 
-export function WechatShareButton({ title, summary, imageUrl, shareUrl }: WechatShareButtonProps) {
+export function WechatShareButton({ title, summary, imageUrl, shareUrl, className }: WechatShareButtonProps) {
   const [state, setState] = useState<ShareState>("idle");
 
   useEffect(() => {
@@ -182,7 +183,7 @@ export function WechatShareButton({ title, summary, imageUrl, shareUrl }: Wechat
       <button
         type="button"
         onClick={shareToWechat}
-        className="mt-8 inline-flex h-11 items-center justify-center gap-2 border border-[#86c96f] bg-[#f4fbf1] px-5 text-sm font-semibold text-[#377d2d] transition hover:border-[#5daf48] hover:bg-[#eaf7e5]"
+        className={className || "mt-8 inline-flex h-11 items-center justify-center gap-2 border border-[#86c96f] bg-[#f4fbf1] px-5 text-sm font-semibold text-[#377d2d] transition hover:border-[#5daf48] hover:bg-[#eaf7e5]"}
       >
         <MessageCircle className="h-4 w-4" />
         微信分享
