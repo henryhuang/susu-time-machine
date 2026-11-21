@@ -37,6 +37,12 @@ export function serializeStory<T extends { tags: string; storyDate: Date; create
   };
 }
 
+const storyOrder: Prisma.StoryOrderByWithRelationInput[] = [
+  { storyDate: "desc" },
+  { createdAt: "desc" },
+  { id: "desc" }
+];
+
 export async function listStories(options?: {
   page?: number;
   pageSize?: number;
@@ -59,7 +65,7 @@ export async function listStories(options?: {
     prisma.story.findMany({
       where,
       include: { images: { orderBy: { sortOrder: "asc" } } },
-      orderBy: [{ storyDate: "desc" }, { createdAt: "desc" }],
+      orderBy: storyOrder,
       skip: (page - 1) * pageSize,
       take: pageSize
     }),
@@ -84,6 +90,25 @@ export async function getStory(idOrSlug: string) {
   });
 
   return story ? serializeStory(story) : null;
+}
+
+export async function getStoryNeighbors(id: string) {
+  const options = {
+    cursor: { id },
+    skip: 1,
+    take: 1,
+    select: { id: true, slug: true, title: true }
+  } satisfies Prisma.StoryFindManyArgs;
+
+  const [[previous], [next]] = await Promise.all([
+    prisma.story.findMany({ ...options, orderBy: storyOrder }),
+    prisma.story.findMany({
+      ...options,
+      orderBy: [{ storyDate: "asc" }, { createdAt: "asc" }, { id: "asc" }]
+    })
+  ]);
+
+  return { previous, next };
 }
 
 export async function createStory(input: StoryInput) {

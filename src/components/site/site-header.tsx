@@ -15,7 +15,7 @@ const navigation = [
 export function SiteHeader({ displayName }: { displayName: string }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const usesEditorialLayout = pathname === "/" || pathname === "/stories";
+  const usesEditorialLayout = pathname === "/" || pathname === "/stories" || pathname.startsWith("/stories/");
   const menuId = useId();
   const menuButton = useRef<HTMLButtonElement>(null);
 

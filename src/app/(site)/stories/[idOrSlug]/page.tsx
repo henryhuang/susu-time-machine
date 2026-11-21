@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
-import Image from "next/image";
-import { MapPin } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { notFound } from "next/navigation";
 import { ImagePreview } from "@/components/site/image-preview";
-import { Tag } from "@/components/ui/tag";
 import { WechatShareButton } from "@/components/site/wechat-share-button";
-import { formatAgeAtDate, formatDate } from "@/lib/dates";
+import { formatAgeAtDate } from "@/lib/dates";
 import { getChildProfile } from "@/lib/child-profile";
 import { getImageUrl } from "@/lib/images";
 import { storyHref } from "@/lib/links";
 import { absoluteUrl, getRequestSiteUrl } from "@/lib/site";
-import { getStory } from "@/server/stories";
+import { getStory, getStoryNeighbors } from "@/server/stories";
+import home from "@/components/site/home.module.css";
+import styles from "./story-detail.module.css";
 
 export const dynamic = "force-dynamic";
 
@@ -64,60 +65,86 @@ export async function generateMetadata({ params }: { params: Promise<{ idOrSlug:
   };
 }
 
+const months = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十", "十一", "十二"];
+
 export default async function StoryDetailPage({ params }: { params: Promise<{ idOrSlug: string }> }) {
   const { idOrSlug } = await params;
   const [story, child] = await Promise.all([getStory(idOrSlug), getChildProfile()]);
   if (!story) notFound();
 
-  const requestSiteUrl = await getRequestSiteUrl();
+  const [{ previous, next }, requestSiteUrl] = await Promise.all([
+    getStoryNeighbors(story.id),
+    getRequestSiteUrl()
+  ]);
   const shareUrl = absoluteUrl(storyHref(story), requestSiteUrl);
   const shareImage = absoluteUrl(getImageUrl(story.coverImage), requestSiteUrl);
-  const paragraphs = story.content.split(/\n+/).filter(Boolean);
-  const age = child.birthday ? formatAgeAtDate(child.birthday, story.storyDate) : "";
+  const paragraphs = story.content.split(/\r\n|[\n\r]/).filter((paragraph) => paragraph.trim());
+  const date = story.storyDate.slice(0, 10);
+  const [year, month] = date.split("-");
+  const age = child.birthday ? formatAgeAtDate(child.birthday, date).replace(/\d+天$/, "") : "";
+  const summary = story.summary.trim();
+  const cover = story.coverImage?.trim();
+  const photos = story.images.map((image) => image.imageUrl.trim()).filter(Boolean);
+  // A cover chosen from the story keeps its original position in the preview sequence.
+  const matchingCover = cover ? photos.indexOf(cover) : -1;
+  const heroIndex = cover ? Math.max(0, matchingCover) : -1;
+  if (cover && matchingCover === -1) photos.unshift(cover);
 
   return (
-    <main className="bg-white pb-20">
-      <article>
-        <header className="mx-auto max-w-4xl px-5 pb-10 pt-14 text-center sm:px-8 sm:pb-14 sm:pt-20">
-          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-xs font-semibold uppercase tracking-[0.2em] text-peach-600">
-            <span>{formatDate(story.storyDate)}</span>
-            {age ? <span>{age}</span> : null}
-            {story.location ? (
-              <span className="inline-flex items-center gap-1 normal-case tracking-normal text-susu-muted">
-                <MapPin className="h-3.5 w-3.5" />
-                {story.location}
-              </span>
-            ) : null}
-          </div>
-          <h1 className="display-serif mt-5 text-balance text-4xl font-semibold leading-tight sm:text-6xl">{story.title}</h1>
-          {story.summary ? <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-susu-muted">{story.summary}</p> : null}
-          <div className="mt-6 flex flex-wrap justify-center gap-2">
-            {story.tags.map((tag) => (
-              <Tag key={tag}>{tag}</Tag>
-            ))}
-          </div>
+    <main className={`${home.main} ${styles.main}`}>
+      <article className={home.container}>
+        <header className={styles.header}>
+          <nav className={styles.breadcrumb} aria-label="面包屑">
+            <Link href="/stories">成长故事</Link>
+            <span aria-hidden="true">/</span>
+            <Link href={`/stories?year=${year}#year-${year}`}>{year}</Link>
+            <span aria-hidden="true">/</span>
+            <span aria-current="page">{months[Number(month) - 1]}月</span>
+          </nav>
+          <h1>{story.title}</h1>
+          <ul className={styles.metadata}>
+            <li><time dateTime={date}>{date.replaceAll("-", ".")}</time></li>
+            {age ? <li>{age}</li> : null}
+            {story.location ? <li>{story.location}</li> : null}
+          </ul>
+          {summary && summary !== story.title.trim() ? <p className={styles.summary}>{story.summary}</p> : null}
+        </header>
+        <ImagePreview key={story.id} photos={photos} heroIndex={heroIndex} title={story.title}>
+          {paragraphs.length > 0 ? (
+            <div className={styles.body}>
+              {paragraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)}
+            </div>
+          ) : null}
+        </ImagePreview>
+        <div className={styles.articleEnd}>
+          {story.tags.length > 0 ? (
+            <ul className={styles.tags} aria-label="故事标签">
+              {story.tags.map((tag, index) => <li key={index}>{tag}</li>)}
+            </ul>
+          ) : null}
           <WechatShareButton
             title={story.title}
             summary={story.summary || `${story.title} - ${child.displayName}的成长故事`}
             imageUrl={shareImage}
             shareUrl={shareUrl}
+            className={styles.share}
           />
-        </header>
-        <div className="relative mx-auto aspect-[16/9] max-h-[760px] max-w-[1440px] overflow-hidden bg-[#ebe7df]">
-          <Image src={getImageUrl(story.coverImage)} alt={story.title} fill priority sizes="100vw" className="object-cover" />
         </div>
-        {paragraphs.length > 0 ? (
-          <div className="story-content mx-auto mt-12 max-w-2xl px-5 text-[16px] leading-9 text-susu-text sm:mt-16 sm:px-8">
-            {paragraphs.map((paragraph, index) => (
-              <p key={index}>{paragraph}</p>
-            ))}
-          </div>
-        ) : null}
-        {story.images.length > 0 ? (
-          <section className="mx-auto mt-16 max-w-6xl px-5 sm:px-8">
-            <h2 className="display-serif mb-6 border-b border-susu-line pb-4 text-2xl font-semibold">照片</h2>
-            <ImagePreview images={story.images} />
-          </section>
+        {previous || next ? (
+          <nav className={styles.neighbors} aria-label="相邻故事">
+            {previous ? (
+              <Link href={storyHref(previous)} prefetch={false} rel="prev">
+                <span><ArrowLeft size={15} aria-hidden="true" /> 上一篇</span>
+                <strong>{previous.title}</strong>
+              </Link>
+            ) : null}
+            {next ? (
+              <Link href={storyHref(next)} prefetch={false} rel="next">
+                <span>下一篇 <ArrowRight size={15} aria-hidden="true" /></span>
+                <strong>{next.title}</strong>
+              </Link>
+            ) : null}
+          </nav>
         ) : null}
       </article>
     </main>
